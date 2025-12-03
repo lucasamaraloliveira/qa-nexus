@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
 import { AuditLog } from '../types';
-import { Search, Filter, Calendar, ChevronLeft, ChevronRight, RefreshCw, Shield, GitBranch, FileText, BookOpen, FolderOpen, FlaskConical, FileClock, Users, LayoutTemplate, Settings, Trash2, X } from 'lucide-react';
+import { Search, Filter, Calendar, ChevronLeft, ChevronRight, RefreshCw, Shield, GitBranch, FileText, BookOpen, FolderOpen, FlaskConical, FileClock, Users, LayoutTemplate, Settings, Trash2, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const AuditLogs: React.FC = () => {
@@ -23,6 +23,7 @@ const AuditLogs: React.FC = () => {
     // Settings & Clear State
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [showCacheClearedModal, setShowCacheClearedModal] = useState(false);
     const [auditSettings, setAuditSettings] = useState<Record<string, boolean>>({});
     const [globalEnabled, setGlobalEnabled] = useState(true);
 
@@ -91,7 +92,7 @@ const AuditLogs: React.FC = () => {
     const handleClearCache = async () => {
         try {
             await apiService.clearAuditCache();
-            alert('Cache de configuração limpo com sucesso!');
+            setShowCacheClearedModal(true);
         } catch (error) {
             console.error('Failed to clear cache:', error);
             alert('Erro ao limpar cache.');
@@ -128,7 +129,7 @@ const AuditLogs: React.FC = () => {
     ];
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 w-full">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Logs de Auditoria</h1>
                 <div className="flex gap-2">
@@ -252,24 +253,34 @@ const AuditLogs: React.FC = () => {
                         </select>
                     </div>
 
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
-                        />
-                    </div>
+                    <div className="col-span-1 md:col-span-1 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 ml-1 md:hidden">Data Início</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="date"
+                                    placeholder="Data Início"
+                                    value={startDate}
+                                    onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+                                    className="w-[80%] md:w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white dark:[color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
 
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
-                        />
+                        <div className="flex flex-col gap-1">
+                            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 ml-1 md:hidden">Data Fim</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="date"
+                                    placeholder="Data Fim"
+                                    value={endDate}
+                                    onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+                                    className="w-[80%] md:w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white dark:[color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -285,8 +296,67 @@ const AuditLogs: React.FC = () => {
                 )}
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4 mb-6">
+                {loading ? (
+                    <div className="p-8 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        Carregando logs...
+                    </div>
+                ) : logs.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        Nenhum log encontrado.
+                    </div>
+                ) : (
+                    logs.map((log) => (
+                        <div key={log.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col gap-3">
+                            {/* Header: User & Action */}
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                        <Users size={16} />
+                                    </div>
+                                    <span className="font-semibold text-slate-800 dark:text-white text-sm">
+                                        {log.username}
+                                    </span>
+                                </div>
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide
+                                    ${log.action === 'CREATE' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                        log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                            log.action === 'DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}
+                                `}>
+                                    {log.action}
+                                </span>
+                            </div>
+
+                            {/* Meta: Module & Date */}
+                            <div className="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700/50 pb-3">
+                                <div className="flex items-center gap-1.5">
+                                    <LayoutTemplate size={14} />
+                                    <span>{log.module}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <FileClock size={14} />
+                                    <span>{new Date(log.timestamp).toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {/* Details */}
+                            <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words">
+                                {log.details}
+                            </div>
+
+                            {/* Footer: IP */}
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 text-right font-mono mt-1">
+                                IP: {log.ipAddress}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
             {/* Table */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div className="hidden md:block bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -485,6 +555,31 @@ const AuditLogs: React.FC = () => {
                                         Sim, Limpar Tudo
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Cache Cleared Success Modal */}
+            {
+                showCacheClearedModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="p-6 flex flex-col items-center text-center">
+                                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+                                    <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Sucesso!</h3>
+                                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                                    O cache de configuração foi limpo com sucesso.
+                                </p>
+                                <button
+                                    onClick={() => setShowCacheClearedModal(false)}
+                                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                                >
+                                    OK
+                                </button>
                             </div>
                         </div>
                     </div>

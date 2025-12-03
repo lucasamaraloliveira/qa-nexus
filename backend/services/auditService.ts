@@ -72,7 +72,21 @@ export class AuditService {
             let ipAddress = '';
 
             if (req) {
-                ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+                const xForwardedFor = req.headers['x-forwarded-for'];
+                if (xForwardedFor) {
+                    // x-forwarded-for can be a list of IPs, take the first one
+                    ipAddress = (Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor.split(',')[0]).trim();
+                } else {
+                    ipAddress = req.socket.remoteAddress || '';
+                }
+
+                // Clean up IP address
+                if (ipAddress.startsWith('::ffff:')) {
+                    ipAddress = ipAddress.substring(7);
+                }
+                if (ipAddress === '::1') {
+                    ipAddress = '127.0.0.1';
+                }
             }
 
             await db.run(

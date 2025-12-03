@@ -135,7 +135,7 @@ export const Manuals: React.FC = () => {
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
-        if (isViewer) return;
+        if (isViewer || isSupport) return;
         setIsDragging(true);
     };
 
@@ -147,7 +147,7 @@ export const Manuals: React.FC = () => {
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-        if (isViewer) return;
+        if (isViewer || isSupport) return;
 
         const files = e.dataTransfer.files;
         if (files.length > 0) {
@@ -313,7 +313,7 @@ export const Manuals: React.FC = () => {
                         </button>
                     </div>
 
-                    {!isViewer && (
+                    {!isViewer && !isSupport && (
                         <>
                             <Button onClick={() => setIsNewFolderModalOpen(true)} variant="secondary" className="flex-1 md:flex-none justify-center">
                                 <FolderPlus className="w-4 h-4 mr-2" />

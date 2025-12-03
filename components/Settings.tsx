@@ -259,7 +259,7 @@ export const Settings: React.FC = () => {
                 <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto">
                     <button
                         onClick={() => setActiveTab('profile')}
-                        className={`flex items-center px-4 py-3 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'profile'
+                        className={`flex items-center px-3 py-2 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'profile'
                             ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                             }`}
@@ -269,7 +269,7 @@ export const Settings: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('security')}
-                        className={`flex items-center px-4 py-3 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'security'
+                        className={`flex items-center px-3 py-2 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'security'
                             ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                             }`}
@@ -281,7 +281,7 @@ export const Settings: React.FC = () => {
                         <>
                             <button
                                 onClick={() => setActiveTab('users')}
-                                className={`flex items-center px-4 py-3 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'users'
+                                className={`flex items-center px-3 py-2 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'users'
                                     ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                     }`}
@@ -291,7 +291,7 @@ export const Settings: React.FC = () => {
                             </button>
                             <button
                                 onClick={() => setActiveTab('permissions')}
-                                className={`flex items-center px-4 py-3 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'permissions'
+                                className={`flex items-center px-3 py-2 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'permissions'
                                     ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                     }`}
@@ -301,7 +301,7 @@ export const Settings: React.FC = () => {
                             </button>
                             <button
                                 onClick={() => setActiveTab('audit')}
-                                className={`flex items-center px-4 py-3 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'audit'
+                                className={`flex items-center px-3 py-2 md:px-6 md:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'audit'
                                     ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                     }`}
@@ -325,9 +325,9 @@ export const Settings: React.FC = () => {
 
                     {activeTab === 'profile' && (
                         <div className="space-y-8">
-                            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
                                 <div className="relative group">
-                                    <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-slate-900 shadow-lg">
+                                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-slate-900 shadow-lg">
                                         {previewUrl ? (
                                             <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
@@ -438,8 +438,9 @@ export const Settings: React.FC = () => {
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Usuários Cadastrados</h2>
                             </div>
 
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden overflow-x-auto">
-                                <table className="w-full text-left text-sm">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                {/* Desktop Table */}
+                                <table className="w-full text-left text-sm hidden md:table">
                                     <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
                                         <tr>
                                             <th className="px-6 py-3 font-medium">ID</th>
@@ -485,6 +486,50 @@ export const Settings: React.FC = () => {
                                         ))}
                                     </tbody>
                                 </table>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                                    {users.map((u) => (
+                                        <div key={u.id} className="p-4 space-y-3">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{u.username}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400">#{u.id}</span>
+                                                    </div>
+                                                    <div className="mt-1">
+                                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${u.role === 'Admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                            u.role === 'Viewer' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400' :
+                                                                u.role === 'Root' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                                    u.role === 'Support' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                                                                        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                            }`}>
+                                                            {u.role || 'Tester'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => handleEditUser(u)}
+                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    {u.username !== 'root' && (
+                                                        <button
+                                                            onClick={() => handleDeleteUser(u.id, u.username)}
+                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Edit User Modal */}
@@ -561,7 +606,8 @@ export const Settings: React.FC = () => {
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Gerenciar Permissões de Acesso</h2>
                             </div>
                             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                                <table className="w-full text-left text-sm">
+                                {/* Desktop Table */}
+                                <table className="w-full text-left text-sm hidden md:table">
                                     <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
                                         <tr>
                                             <th className="px-6 py-3 font-medium">Módulo</th>
@@ -592,6 +638,31 @@ export const Settings: React.FC = () => {
                                         })}
                                     </tbody>
                                 </table>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                                    {MODULES.map((module) => {
+                                        const perm = permissions.find(p => p.id === module.id) || { allowedRoles: [] };
+                                        return (
+                                            <div key={module.id} className="p-4">
+                                                <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-3">{module.label}</h3>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {(['Admin', 'Tester', 'Viewer', 'Support'] as Role[]).map(role => (
+                                                        <label key={role} className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={perm.allowedRoles.includes(role)}
+                                                                onChange={() => togglePermission(module.id, role)}
+                                                                className="w-4 h-4 text-indigo-600 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-white dark:focus:ring-offset-slate-900 accent-indigo-600"
+                                                            />
+                                                            <span>{role}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -602,7 +673,8 @@ export const Settings: React.FC = () => {
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Ative ou desative o log de auditoria para cada módulo.</p>
                             </div>
                             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                                <table className="w-full text-left text-sm">
+                                {/* Desktop Table */}
+                                <table className="w-full text-left text-sm hidden md:table">
                                     <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
                                         <tr>
                                             <th className="px-6 py-3 font-medium">Módulo</th>
@@ -632,6 +704,28 @@ export const Settings: React.FC = () => {
                                         })}
                                     </tbody>
                                 </table>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                                    {MODULES.map((module) => {
+                                        const isEnabled = auditSettings[module.id] !== false; // Default true
+                                        return (
+                                            <div key={module.id} className="p-4 flex justify-between items-center">
+                                                <span className="font-medium text-slate-900 dark:text-slate-100">{module.label}</span>
+                                                <button
+                                                    onClick={() => toggleAuditSetting(module.id)}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${isEnabled ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
+                                                        }`}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'
+                                                            }`}
+                                                    />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     )}

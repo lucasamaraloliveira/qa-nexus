@@ -26,6 +26,7 @@ export interface Script {
   name: string;
   type: 'SQL' | 'Shell' | 'Config';
   content: string;
+  folder?: string;
 }
 
 export interface Version {

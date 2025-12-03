@@ -1,5 +1,7 @@
 import React from 'react';
-import { FileClock, CheckCircle2, Sparkles, Bug, Wrench, Smartphone, Layout as LayoutIcon, ChevronRight, Users } from 'lucide-react';
+import { FileClock, CheckCircle2, Sparkles, Bug, Wrench, Smartphone, Layout as LayoutIcon, ChevronRight, Users, Download, ShieldCheck } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ChangelogProps {
     onClose?: () => void;
@@ -9,11 +11,109 @@ interface ChangelogProps {
 export const Changelog: React.FC<ChangelogProps> = ({ onClose, version }) => {
     const changes = [
         {
+            version: '3.1.2',
+            date: '03 de Dezembro, 2025',
+            type: 'patch',
+            features: [
+                {
+                    title: 'Correção no Login da Sidebar',
+                    description: 'Corrigido bug onde os módulos da sidebar desapareciam ao relogar após expiração da sessão.',
+                    icon: Bug,
+                    color: 'text-red-500 bg-red-50 dark:bg-red-900/20'
+                },
+                {
+                    title: 'Auditoria Completa',
+                    description: 'Corrigido problema onde apenas ações do usuário root eram registradas; agora todos os usuários são auditados corretamente.',
+                    icon: ShieldCheck,
+                    color: 'text-green-500 bg-green-50 dark:bg-green-900/20'
+                },
+                {
+                    title: 'Melhorias no Layout Mobile',
+                    description: 'Otimização da visualização da tela de Configurações em dispositivos móveis, com abas ajustadas e visualização em cards.',
+                    icon: Smartphone,
+                    color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                }
+            ]
+        },
+        {
+            version: '3.1.1',
+            date: '02 de Dezembro, 2025',
+            type: 'patch',
+            features: [
+                {
+                    title: 'Melhoria no Layout Mobile',
+                    description: 'Ajuste nos campos de data da tela de Audit Logs para melhor visualização em dispositivos móveis, com redução de tamanho e novos labels.',
+                    icon: Smartphone,
+                    color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                }
+            ]
+        },
+        {
+            version: '3.1',
+            date: '02 de Dezembro, 2025',
+            type: 'minor',
+            features: [
+                {
+                    title: 'Exportação de Changelog em PDF',
+                    description: 'Agora é possível exportar o changelog completo ou versões individuais em formato PDF.',
+                    icon: Download,
+                    color: 'text-red-500 bg-red-50 dark:bg-red-900/20'
+                },
+                {
+                    title: 'Ajuste na Tela de Auditoria',
+                    description: 'A largura da tela de auditoria foi ajustada para melhor visualização dos registros.',
+                    icon: LayoutIcon,
+                    color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                },
+                {
+                    title: 'Redirecionamento Inteligente',
+                    description: 'Ao logar, o usuário é direcionado automaticamente para a tela que possui permissão de acesso.',
+                    icon: Sparkles,
+                    color: 'text-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                },
+                {
+                    title: 'Melhorias Visuais na Auditoria',
+                    description: 'Calendário com tema dark e ícones brancos nos campos de data para melhor contraste.',
+                    icon: Wrench,
+                    color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                },
+                {
+                    title: 'Limpeza de Cache Aprimorada',
+                    description: 'A confirmação de limpeza de cache agora é exibida em um modal elegante ao invés de um alerta do navegador.',
+                    icon: Sparkles,
+                    color: 'text-green-500 bg-green-50 dark:bg-green-900/20'
+                },
+                {
+                    title: 'Permissões Granulares',
+                    description: 'Implementação de permissões específicas, como restrição de download de manuais para suporte.',
+                    icon: Users,
+                    color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                },
+                {
+                    title: 'Busca Aprimorada em Docs',
+                    description: 'A tecla Enter agora busca a próxima ocorrência do termo pesquisado em Docs de Build e Docs Úteis.',
+                    icon: Sparkles,
+                    color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                },
+                {
+                    title: 'Organização por Pastas',
+                    description: 'Em Versões e Scripts, agora é possível criar pastas para organizar arquivos (ex: Scripts > Tabelas).',
+                    icon: FileClock,
+                    color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                },
+                {
+                    title: 'Download de Versão Completa',
+                    description: 'Nova funcionalidade para baixar a versão completa, incluindo todos os scripts e estrutura de pastas, em formato .zip.',
+                    icon: Download,
+                    color: 'text-green-500 bg-green-50 dark:bg-green-900/20'
+                }
+            ]
+        },
+        {
             version: '3.0',
             date: '01 de Dezembro, 2025',
             type: 'major',
             features: [
-
                 {
                     title: 'Novo menu de auditoria',
                     description: 'Inserido menu de auditoria para que possa acompanhar as alterações feitas no sistema.',
@@ -282,6 +382,57 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, version }) => {
     const latestVersion = changes[0];
     const archivedVersions = changes.slice(1);
 
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(20);
+        doc.text('QA Nexus - Changelog', 14, 22);
+        doc.setFontSize(10);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 14, 30);
+
+        let yPos = 40;
+
+        changes.forEach((release) => {
+            // Version Header
+            doc.setFontSize(14);
+            doc.setTextColor(79, 70, 229); // Indigo 600
+            doc.text(`v${release.version} - ${release.date}`, 14, yPos);
+            yPos += 10;
+
+            // Features Table
+            const tableData = release.features.map(feature => [
+                feature.title,
+                feature.description
+            ]);
+
+            autoTable(doc, {
+                startY: yPos,
+                head: [['Funcionalidade', 'Descrição']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [79, 70, 229] },
+                styles: { fontSize: 10, cellPadding: 5 },
+                columnStyles: {
+                    0: { cellWidth: 50, fontStyle: 'bold' },
+                    1: { cellWidth: 'auto' }
+                },
+                margin: { left: 14, right: 14 }
+            });
+
+            // Update yPos for next iteration
+            yPos = (doc as any).lastAutoTable.finalY + 15;
+
+            // Add new page if needed
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+            }
+        });
+
+        doc.save('changelog.pdf');
+    };
+
     if (onClose) {
         return (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -296,6 +447,13 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, version }) => {
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Confira o que há de novo no QA Nexus</p>
                             </div>
                         </div>
+                        <button
+                            onClick={handleExportPDF}
+                            className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-lg transition-colors mr-2"
+                            title="Exportar PDF"
+                        >
+                            <Download className="w-5 h-5" />
+                        </button>
                         <button
                             onClick={onClose}
                             className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"

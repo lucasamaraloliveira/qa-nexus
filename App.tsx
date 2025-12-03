@@ -21,10 +21,11 @@ import { ChangelogManager } from './components/ChangelogManager';
 import AuditLogs from './components/AuditLogs';
 import { SessionExpiryModal } from './components/SessionExpiryModal';
 import { Version, BuildDoc, UsefulDoc, TestPlan } from './types';
+import { permissionService, MODULES } from './services/permissionService';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
 
   // App State
@@ -58,6 +59,28 @@ const AppContent: React.FC = () => {
     };
 
     fetchData();
+    fetchData();
+  }, [isAuthenticated]);
+
+  // Redirect based on permissions
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Check if user has access to current tab
+      if (!permissionService.canAccessModule(activeTab, user.role)) {
+        // Find first accessible module
+        const firstAllowed = MODULES.find(m => permissionService.canAccessModule(m.id, user.role));
+        if (firstAllowed) {
+          setActiveTab(firstAllowed.id);
+        }
+      }
+    }
+  }, [isAuthenticated, user, activeTab]);
+
+  // Reset active tab on logout
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setActiveTab('dashboard');
+    }
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {

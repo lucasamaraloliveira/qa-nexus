@@ -14,6 +14,7 @@ export const MODULES = [
     { id: 'tests', label: 'Gestão de Testes' },
     { id: 'changelog-manager', label: 'Changelog' },
     { id: 'audit-logs', label: 'Audit Logs' },
+    { id: 'settings', label: 'Configurações' },
 ];
 
 const DEFAULT_PERMISSIONS: ModulePermission[] = [
@@ -25,6 +26,7 @@ const DEFAULT_PERMISSIONS: ModulePermission[] = [
     { id: 'tests', allowedRoles: ['Root', 'Admin', 'Tester', 'Viewer', 'Support'] },
     { id: 'changelog-manager', allowedRoles: ['Root', 'Admin'] },
     { id: 'audit-logs', allowedRoles: ['Root'] },
+    { id: 'settings', allowedRoles: ['Root', 'Admin', 'Tester', 'Viewer', 'Support'] },
 ];
 
 const STORAGE_KEY = 'module_permissions';

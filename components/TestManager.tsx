@@ -443,7 +443,7 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Planejamento de Testes</h1>
           <p className="text-slate-500 dark:text-slate-400">Crie planos, vincule casos e acompanhe a execução.</p>
         </div>
-        {!isViewer && (
+        {!isViewer && !isSupport && (
           <Button onClick={() => setIsPlanModalOpen(true)} className="w-full md:w-auto">
             <Plus className="w-4 h-4 mr-2" /> Novo Plano
           </Button>
@@ -538,7 +538,7 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                    {!isViewer && (
+                    {!isViewer && !isSupport && (
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDuplicatePlan(plan.id, plan.name); }}
@@ -594,7 +594,7 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
                     <Clock className="w-4 h-4 mr-2 text-indigo-500 dark:text-indigo-400" />
                     <span className="font-medium">{calculateTotalTime(selectedPlan.testCases)}</span>
                   </div>
-                  {user?.role !== 'Viewer' && (
+                  {user?.role !== 'Viewer' && !isSupport && (
                     <>
                       <button
                         onClick={handleResetStatus}
@@ -647,9 +647,9 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
                         <div className="flex items-start gap-3 md:gap-4">
                           <button
                             onClick={() => toggleCaseStatus(selectedPlan.id, testCase.id)}
-                            className={`mt-1 flex-shrink-0 focus:outline-none transform ${user?.role !== 'Viewer' ? 'group-hover:scale-110' : 'cursor-default'} transition-transform`}
-                            title={user?.role !== 'Viewer' ? "Alterar Status" : "Status"}
-                            disabled={user?.role === 'Viewer'}
+                            className={`mt-1 flex-shrink-0 focus:outline-none transform ${user?.role !== 'Viewer' && !isSupport ? 'group-hover:scale-110' : 'cursor-default'} transition-transform`}
+                            title={user?.role !== 'Viewer' && !isSupport ? "Alterar Status" : "Status"}
+                            disabled={user?.role === 'Viewer' || isSupport}
                           >
                             {getStatusIcon(testCase.status)}
                           </button>
@@ -677,7 +677,7 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
                                   {testCase.status}
                                 </span>
                                 <div className="flex items-center gap-1 ml-auto md:ml-0">
-                                  {user?.role !== 'Viewer' && (
+                                  {user?.role !== 'Viewer' && !isSupport && (
                                     <>
                                       <button
                                         onClick={() => handleEditCase(testCase)}

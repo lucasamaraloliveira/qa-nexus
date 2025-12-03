@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { FileClock, CheckCircle2, Sparkles, Bug, Wrench, Plus, Settings, Trash2, ChevronDown, ChevronRight, Calendar, Pencil, Upload, ImageIcon, Loader2, X, Search } from 'lucide-react';
+import { FileClock, CheckCircle2, Sparkles, Bug, Wrench, Plus, Settings, Trash2, ChevronDown, ChevronRight, Calendar, Pencil, Upload, ImageIcon, Loader2, X, Search, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { apiService } from '../services/apiService';
 import { ChangelogSystem, ChangelogEntry, ChangelogItem, Version } from '../types';
 import { Button } from './Button';
@@ -380,6 +382,315 @@ export const ChangelogManager: React.FC = () => {
         }
     };
 
+    const getImageBase64 = async (url: string): Promise<{ data: string, width: number, height: number } | null> => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64data = reader.result as string;
+                    const img = new Image();
+                    img.onload = () => {
+                        resolve({
+                            data: base64data,
+                            width: img.width,
+                            height: img.height
+                        });
+                    };
+                    img.src = base64data;
+                };
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error('Error fetching image:', error);
+            return null;
+        }
+    };
+
+    const handleExportPDF = async () => {
+        const doc = new jsPDF();
+        const systemName = systems.find(s => s.id === selectedSystemId)?.name || 'Sistema';
+
+        // Title
+        doc.setFontSize(18);
+        doc.text(`Relatório de Changelog - ${systemName}`, 14, 22);
+        doc.setFontSize(10);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 14, 30);
+
+        let yPos = 40;
+
+        for (const release of filteredEntries) {
+            // Version Header
+            doc.setFontSize(14);
+            doc.setTextColor(79, 70, 229); // Indigo 600
+            doc.text(`v${release.version} - ${release.date}`, 14, yPos);
+            yPos += 10;
+
+            // Prepare data with images
+            const tableData = await Promise.all(release.items.map(async (item) => {
+                let imageData = null;
+                if (item.image) {
+                    imageData = await getImageBase64(item.image);
+                }
+                return {
+                    title: item.title,
+                    description: item.description,
+                    image: imageData
+                };
+            }));
+
+            let currentBatch = [];
+
+            for (let i = 0; i < tableData.length; i++) {
+                const item = tableData[i];
+
+                if (item.image) {
+                    // Flush existing text items
+                    if (currentBatch.length > 0) {
+                        autoTable(doc, {
+                            startY: yPos,
+                            head: [['Título', 'Descrição']],
+                            body: currentBatch.map(i => [i.title, i.description]),
+                            theme: 'striped',
+                            headStyles: { fillColor: [79, 70, 229] },
+                            styles: { fontSize: 10, cellPadding: 5, minCellHeight: 10, valign: 'middle' },
+                            columnStyles: {
+                                0: { cellWidth: 60, fontStyle: 'bold' },
+                                1: { cellWidth: 'auto' }
+                            },
+                            margin: { left: 14, right: 14 }
+                        });
+                        yPos = (doc as any).lastAutoTable.finalY + 15;
+                        currentBatch = [];
+                    }
+
+                    // Page Break for Image Item
+                    if (yPos > 60) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    // Print Image Item
+                    const body = [];
+                    body.push([item.title, item.description]);
+
+                    const pageWidth = doc.internal.pageSize.width;
+                    const margin = 14;
+                    const availableWidth = pageWidth - (margin * 2);
+                    const imgHeight = (item.image.height / item.image.width) * availableWidth;
+
+                    body.push([{
+                        content: '',
+                        colSpan: 2,
+                        styles: { minCellHeight: imgHeight + 10 },
+                        image: item.image
+                    }]);
+
+                    autoTable(doc, {
+                        startY: yPos,
+                        head: [['Título', 'Descrição']],
+                        body: body,
+                        theme: 'striped',
+                        headStyles: { fillColor: [79, 70, 229] },
+                        styles: { fontSize: 10, cellPadding: 5, minCellHeight: 10, valign: 'middle' },
+                        columnStyles: {
+                            0: { cellWidth: 60, fontStyle: 'bold' },
+                            1: { cellWidth: 'auto' }
+                        },
+                        margin: { left: 14, right: 14 },
+                        didDrawCell: (data) => {
+                            if (data.section === 'body' && data.cell.raw && (data.cell.raw as any).image) {
+                                const imgData = (data.cell.raw as any).image;
+                                const pageWidth = doc.internal.pageSize.width;
+                                const margin = 14;
+                                const availableWidth = pageWidth - (margin * 2);
+                                const imgHeight = (imgData.height / imgData.width) * availableWidth;
+
+                                const x = data.cell.x + (data.cell.width - availableWidth) / 2;
+                                const y = data.cell.y + 5;
+
+                                try {
+                                    doc.addImage(imgData.data, 'JPEG', x, y, availableWidth, imgHeight);
+                                } catch (e) {
+                                    console.error('Error adding image to PDF', e);
+                                }
+                            }
+                        }
+                    });
+
+                    yPos = (doc as any).lastAutoTable.finalY + 15;
+
+                } else {
+                    currentBatch.push(item);
+                }
+            }
+
+            // Flush remaining items
+            if (currentBatch.length > 0) {
+                autoTable(doc, {
+                    startY: yPos,
+                    head: [['Título', 'Descrição']],
+                    body: currentBatch.map(i => [i.title, i.description]),
+                    theme: 'striped',
+                    headStyles: { fillColor: [79, 70, 229] },
+                    styles: { fontSize: 10, cellPadding: 5, minCellHeight: 10, valign: 'middle' },
+                    columnStyles: {
+                        0: { cellWidth: 60, fontStyle: 'bold' },
+                        1: { cellWidth: 'auto' }
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+                yPos = (doc as any).lastAutoTable.finalY + 15;
+            }
+
+            // Add new page if needed for next release
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+            }
+        }
+
+        doc.save(`changelog-${systemName.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+    };
+
+    const handleExportSinglePDF = async (entry: ChangelogEntry) => {
+        const doc = new jsPDF();
+        const systemName = systems.find(s => s.id === selectedSystemId)?.name || 'Sistema';
+
+        // Title
+        doc.setFontSize(18);
+        doc.text(`Relatório de Versão - ${systemName}`, 14, 22);
+        doc.setFontSize(14);
+        doc.setTextColor(79, 70, 229); // Indigo 600
+        doc.text(`v${entry.version} - ${entry.date}`, 14, 32);
+        doc.setTextColor(0, 0, 0); // Reset color
+        doc.setFontSize(10);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 14, 40);
+
+        let yPos = 50;
+
+        // Prepare data with images
+        const tableData = await Promise.all(entry.items.map(async (item) => {
+            let imageData = null;
+            if (item.image) {
+                imageData = await getImageBase64(item.image);
+            }
+            return {
+                title: item.title,
+                description: item.description,
+                image: imageData
+            };
+        }));
+
+        let currentBatch = [];
+
+        for (let i = 0; i < tableData.length; i++) {
+            const item = tableData[i];
+
+            if (item.image) {
+                // Flush existing text items
+                if (currentBatch.length > 0) {
+                    autoTable(doc, {
+                        startY: yPos,
+                        head: [['Título', 'Descrição']],
+                        body: currentBatch.map(i => [i.title, i.description]),
+                        theme: 'striped',
+                        headStyles: { fillColor: [79, 70, 229] },
+                        styles: { fontSize: 10, cellPadding: 5, minCellHeight: 10, valign: 'middle' },
+                        columnStyles: {
+                            0: { cellWidth: 60, fontStyle: 'bold' },
+                            1: { cellWidth: 'auto' }
+                        },
+                        margin: { left: 14, right: 14 }
+                    });
+                    yPos = (doc as any).lastAutoTable.finalY + 15;
+                    currentBatch = [];
+                }
+
+                // Page Break for Image Item
+                if (yPos > 60) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                // Print Image Item
+                const body = [];
+                body.push([item.title, item.description]);
+
+                const pageWidth = doc.internal.pageSize.width;
+                const margin = 14;
+                const availableWidth = pageWidth - (margin * 2);
+                const imgHeight = (item.image.height / item.image.width) * availableWidth;
+
+                body.push([{
+                    content: '',
+                    colSpan: 2,
+                    styles: { minCellHeight: imgHeight + 10 },
+                    image: item.image
+                }]);
+
+                autoTable(doc, {
+                    startY: yPos,
+                    head: [['Título', 'Descrição']],
+                    body: body,
+                    theme: 'striped',
+                    headStyles: { fillColor: [79, 70, 229] },
+                    styles: { fontSize: 10, cellPadding: 5, minCellHeight: 10, valign: 'middle' },
+                    columnStyles: {
+                        0: { cellWidth: 60, fontStyle: 'bold' },
+                        1: { cellWidth: 'auto' }
+                    },
+                    margin: { left: 14, right: 14 },
+                    didDrawCell: (data) => {
+                        if (data.section === 'body' && data.cell.raw && (data.cell.raw as any).image) {
+                            const imgData = (data.cell.raw as any).image;
+                            const pageWidth = doc.internal.pageSize.width;
+                            const margin = 14;
+                            const availableWidth = pageWidth - (margin * 2);
+                            const imgHeight = (imgData.height / imgData.width) * availableWidth;
+
+                            const x = data.cell.x + (data.cell.width - availableWidth) / 2;
+                            const y = data.cell.y + 5;
+
+                            try {
+                                doc.addImage(imgData.data, 'JPEG', x, y, availableWidth, imgHeight);
+                            } catch (e) {
+                                console.error('Error adding image to PDF', e);
+                            }
+                        }
+                    }
+                });
+
+                yPos = (doc as any).lastAutoTable.finalY + 15;
+
+            } else {
+                currentBatch.push(item);
+            }
+        }
+
+        // Flush remaining items
+        if (currentBatch.length > 0) {
+            autoTable(doc, {
+                startY: yPos,
+                head: [['Título', 'Descrição']],
+                body: currentBatch.map(i => [i.title, i.description]),
+                theme: 'striped',
+                headStyles: { fillColor: [79, 70, 229] },
+                styles: { fontSize: 10, cellPadding: 5, minCellHeight: 10, valign: 'middle' },
+                columnStyles: {
+                    0: { cellWidth: 60, fontStyle: 'bold' },
+                    1: { cellWidth: 'auto' }
+                },
+                margin: { left: 14, right: 14 }
+            });
+            yPos = (doc as any).lastAutoTable.finalY + 15;
+        }
+
+        doc.save(`changelog-${systemName.toLowerCase().replace(/\s+/g, '-')}-v${entry.version}.pdf`);
+    };
+
     const inputClass = "w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors";
 
     return (
@@ -397,19 +708,26 @@ export const ChangelogManager: React.FC = () => {
                 <div className="flex gap-2 w-full md:w-auto">
                     {!isViewer && (
                         <>
-                            <Button variant="ghost" onClick={() => setIsSystemModalOpen(true)} className="flex-1 md:flex-none justify-center">
-                                <Settings className="w-4 h-4 mr-2" /> Sistemas
+                            {!isSupport && (
+                                <Button variant="ghost" onClick={() => setIsSystemModalOpen(true)} className="flex-1 md:flex-none justify-center">
+                                    <Settings className="w-4 h-4 mr-2" /> Sistemas
+                                </Button>
+                            )}
+                            <Button variant="outline" onClick={handleExportPDF} className="flex-1 md:flex-none justify-center" disabled={filteredEntries.length === 0}>
+                                <Download className="w-4 h-4 mr-2" /> Exportar PDF
                             </Button>
-                            <Button onClick={() => {
-                                setEditingEntry(null);
-                                setNewEntryVersion('');
-                                setNewEntryItems([]);
-                                setIsEntryModalOpen(true);
-                                setIsCollapsed(true);
-                                setEditingItemIndex(null);
-                            }} className="flex-1 md:flex-none justify-center">
-                                <Plus className="w-4 h-4 mr-2" /> Nova Versão
-                            </Button>
+                            {!isSupport && (
+                                <Button onClick={() => {
+                                    setEditingEntry(null);
+                                    setNewEntryVersion('');
+                                    setNewEntryItems([]);
+                                    setIsEntryModalOpen(true);
+                                    setIsCollapsed(true);
+                                    setEditingItemIndex(null);
+                                }} className="flex-1 md:flex-none justify-center">
+                                    <Plus className="w-4 h-4 mr-2" /> Nova Versão
+                                </Button>
+                            )}
                         </>
                     )}
                 </div>
@@ -468,12 +786,21 @@ export const ChangelogManager: React.FC = () => {
                                             {!isViewer && (
                                                 <>
                                                     <button
-                                                        onClick={() => handleEditEntry(release)}
-                                                        className="text-slate-400 hover:text-blue-500 transition-colors"
-                                                        title="Editar versão"
+                                                        onClick={() => handleExportSinglePDF(release)}
+                                                        className="text-slate-400 hover:text-indigo-500 transition-colors"
+                                                        title="Exportar PDF desta versão"
                                                     >
-                                                        <Pencil className="w-4 h-4" />
+                                                        <Download className="w-4 h-4" />
                                                     </button>
+                                                    {!isSupport && (
+                                                        <button
+                                                            onClick={() => handleEditEntry(release)}
+                                                            className="text-slate-400 hover:text-blue-500 transition-colors"
+                                                            title="Editar versão"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                     {!isSupport && (
                                                         <button
                                                             onClick={() => handleDeleteEntry(release.id)}

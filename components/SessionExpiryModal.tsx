@@ -25,7 +25,7 @@ export const SessionExpiryModal: React.FC = () => {
 
         try {
             const data = await apiService.login(username, password);
-            login(data.token, data.username);
+            login(data.token, data.username, data.role, data.id);
             setPassword('');
         } catch (err: any) {
             setError(err.message || 'Falha na autenticação');

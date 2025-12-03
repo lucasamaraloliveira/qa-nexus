@@ -24,7 +24,10 @@ export async function initializeDatabase() {
             version_id INTEGER,
             name TEXT,
             type TEXT,
+            name TEXT,
+            type TEXT,
             content TEXT,
+            folder TEXT,
             FOREIGN KEY(version_id) REFERENCES versions(id) ON DELETE CASCADE
         );
 
@@ -181,6 +184,9 @@ export async function initializeDatabase() {
     } catch (e) { }
     try {
         await db.exec(`ALTER TABLE changelog_items ADD COLUMN image TEXT;`);
+    } catch (e) { }
+    try {
+        await db.exec(`ALTER TABLE scripts ADD COLUMN folder TEXT;`);
     } catch (e) { }
 
     // Seed root user

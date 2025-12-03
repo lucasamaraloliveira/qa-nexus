@@ -34,8 +34,8 @@ router.post('/', authenticateToken, async (req: any, res) => {
         if (scripts && Array.isArray(scripts)) {
             for (const script of scripts) {
                 await db.run(
-                    'INSERT INTO scripts (version_id, name, type, content) VALUES (?, ?, ?, ?)',
-                    [versionId, script.name, script.type, script.content]
+                    'INSERT INTO scripts (version_id, name, type, content, folder) VALUES (?, ?, ?, ?, ?)',
+                    [versionId, script.name, script.type, script.content, script.folder]
                 );
             }
         }
@@ -65,8 +65,8 @@ router.put('/:id', authenticateToken, async (req: any, res) => {
         if (scripts && Array.isArray(scripts)) {
             for (const script of scripts) {
                 await db.run(
-                    'INSERT INTO scripts (version_id, name, type, content) VALUES (?, ?, ?, ?)',
-                    [id, script.name, script.type, script.content]
+                    'INSERT INTO scripts (version_id, name, type, content, folder) VALUES (?, ?, ?, ?, ?)',
+                    [id, script.name, script.type, script.content, script.folder]
                 );
             }
         }

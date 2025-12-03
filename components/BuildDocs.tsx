@@ -29,6 +29,8 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
   const [mobileView, setMobileView] = useState<'list' | 'content'>('list');
   const [isEditing, setIsEditing] = useState(false);
   const [contentSearchTerm, setContentSearchTerm] = useState(''); // New state for content search
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [totalMatches, setTotalMatches] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null); // Ref for content container
 
   const { showToast } = useToast();
@@ -188,21 +190,47 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
   const highlightContent = (content: string, term: string) => {
     if (!term) return content;
     const regex = new RegExp(`(${term})`, 'gi');
-    return content.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-slate-900 dark:text-slate-100 rounded px-0.5">$1</mark>');
+    let count = 0;
+    return content.replace(regex, (match) => {
+      count++;
+      const isCurrent = count === currentMatchIndex + 1;
+      const activeClass = isCurrent ? 'ring-2 ring-indigo-500 font-bold' : '';
+      return `<mark id="match-${count}" class="bg-yellow-200 dark:bg-yellow-900/50 text-slate-900 dark:text-slate-100 rounded px-0.5 ${activeClass}">${match}</mark>`;
+    });
   };
 
-  // Auto-scroll to first match
+  // Count matches when search term or doc changes
   useEffect(() => {
-    if (contentSearchTerm && contentRef.current) {
+    if (!selectedDoc || !contentSearchTerm) {
+      setTotalMatches(0);
+      setCurrentMatchIndex(0);
+      return;
+    }
+    const regex = new RegExp(contentSearchTerm, 'gi');
+    const matches = selectedDoc.content.match(regex);
+    setTotalMatches(matches ? matches.length : 0);
+    setCurrentMatchIndex(0);
+  }, [contentSearchTerm, selectedDoc]);
+
+  // Scroll to current match
+  useEffect(() => {
+    if (contentSearchTerm && contentRef.current && totalMatches > 0) {
       // Small timeout to allow DOM to update with highlights
       setTimeout(() => {
-        const firstMatch = contentRef.current?.querySelector('mark');
-        if (firstMatch) {
-          firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const matchElement = contentRef.current?.querySelector(`#match-${currentMatchIndex + 1}`);
+        if (matchElement) {
+          matchElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 100);
     }
-  }, [contentSearchTerm, selectedDoc]);
+  }, [currentMatchIndex, contentSearchTerm, totalMatches]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && totalMatches > 0) {
+      e.preventDefault();
+      setCurrentMatchIndex((prev) => (prev + 1) % totalMatches);
+    }
+  };
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col md:flex-row gap-6">
@@ -213,7 +241,7 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
             <LayoutTemplate className="w-4 h-4 mr-2 text-indigo-500" />
             Docs de Build
           </h2>
-          {!isViewer && (
+          {!isViewer && !isSupport && (
             <button onClick={() => setIsCreateModalOpen(true)} className="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 p-1.5 rounded-full transition-colors">
               <Plus className="w-4 h-4" />
             </button>
@@ -252,7 +280,7 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
                 <span className="truncate">{doc.system}</span>
               </div>
               <div className={`flex items-center opacity-0 group-hover:opacity-100 transition-opacity ${selectedDocId === doc.id ? 'opacity-100' : ''}`}>
-                {!isViewer && (
+                {!isViewer && !isSupport && (
                   <>
                     <button
                       onClick={(e) => openRenameModal(doc.id, doc.system, e)}
@@ -307,11 +335,17 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
                       className="pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all w-full md:w-40"
                       value={contentSearchTerm}
                       onChange={(e) => setContentSearchTerm(e.target.value)}
+                      onKeyDown={handleKeyDown}
                     />
+                    {totalMatches > 0 && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400">
+                        {currentMatchIndex + 1}/{totalMatches}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="flex space-x-2">
-                  {!isViewer && (
+                  {!isViewer && !isSupport && (
                     !isEditing ? (
                       <>
                         <Button
@@ -362,7 +396,7 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-900/50">
             <FileCode className="w-16 h-16 mb-4 opacity-20" />
             <p>Selecione um documento ou crie um novo para começar</p>
-            {!isViewer && (
+            {!isViewer && !isSupport && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="mt-6 md:hidden px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium"
