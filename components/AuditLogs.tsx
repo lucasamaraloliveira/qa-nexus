@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
 import { AuditLog } from '../types';
@@ -590,3 +591,4 @@ const AuditLogs: React.FC = () => {
 };
 
 export default AuditLogs;
+

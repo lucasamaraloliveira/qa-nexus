@@ -8,15 +8,13 @@ const router = express.Router();
 router.get('/', async (req, res) => {
     try {
         const db = getDb();
-        const versions = await db.all('SELECT * FROM versions');
-
-        for (const version of versions) {
-            const scripts = await db.all('SELECT * FROM scripts WHERE version_id = ?', version.id);
-            version.scripts = scripts;
-        }
+        const versions = await db.version.findMany({
+            include: { scripts: true }
+        });
 
         res.json(versions);
     } catch (error) {
+        console.error('Error fetching versions:', error);
         res.status(500).json({ error: 'Failed to fetch versions' });
     }
 });
@@ -25,70 +23,84 @@ router.post('/', authenticateToken, async (req: any, res) => {
     const { versionNumber, releaseDate, status, description, scripts } = req.body;
     try {
         const db = getDb();
-        const result = await db.run(
-            'INSERT INTO versions (versionNumber, releaseDate, status, description) VALUES (?, ?, ?, ?)',
-            [versionNumber, releaseDate, status, description]
-        );
-        const versionId = result.lastID;
+        const newVersion = await db.version.create({
+            data: {
+                versionNumber,
+                releaseDate,
+                status,
+                description,
+                scripts: {
+                    create: scripts?.map((script: any) => ({
+                        name: script.name,
+                        type: script.type,
+                        content: script.content,
+                        folder: script.folder
+                    })) || []
+                }
+            },
+            include: { scripts: true }
+        });
 
-        if (scripts && Array.isArray(scripts)) {
-            for (const script of scripts) {
-                await db.run(
-                    'INSERT INTO scripts (version_id, name, type, content, folder) VALUES (?, ?, ?, ?, ?)',
-                    [versionId, script.name, script.type, script.content, script.folder]
-                );
-            }
-        }
+        await AuditService.logAction(req.user.id, req.user.username, 'CREATE', 'VERSIONS', newVersion.id.toString(), `Versão criada ${versionNumber}`, req);
 
-        await AuditService.logAction(req.user.id, req.user.username, 'CREATE', 'VERSIONS', versionId?.toString() || '', `Versão criada ${versionNumber}`, req);
-
-        res.json({ id: versionId, ...req.body });
+        res.json(newVersion);
     } catch (error) {
+        console.error('Error creating version:', error);
         res.status(500).json({ error: 'Failed to create version' });
     }
 });
 
 router.put('/:id', authenticateToken, async (req: any, res) => {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
     const { versionNumber, releaseDate, status, description, scripts } = req.body;
     try {
         const db = getDb();
-        await db.run(
-            'UPDATE versions SET versionNumber = ?, releaseDate = ?, status = ?, description = ? WHERE id = ?',
-            [versionNumber, releaseDate, status, description, id]
-        );
 
-        // Update scripts: simple approach - delete all and recreate
-        // In a real app, you might want to diff and update
-        await db.run('DELETE FROM scripts WHERE version_id = ?', id);
+        await db.$transaction(async (tx: any) => {
+            await tx.version.update({
+                where: { id },
+                data: { versionNumber, releaseDate, status, description }
+            });
 
-        if (scripts && Array.isArray(scripts)) {
-            for (const script of scripts) {
-                await db.run(
-                    'INSERT INTO scripts (version_id, name, type, content, folder) VALUES (?, ?, ?, ?, ?)',
-                    [id, script.name, script.type, script.content, script.folder]
-                );
+            await tx.script.deleteMany({
+                where: { versionId: id }
+            });
+
+            if (scripts && Array.isArray(scripts)) {
+                await tx.script.createMany({
+                    data: scripts.map((script: any) => ({
+                        versionId: id,
+                        name: script.name,
+                        type: script.type,
+                        content: script.content,
+                        folder: script.folder
+                    }))
+                });
             }
-        }
+        });
 
-        await AuditService.logAction(req.user.id, req.user.username, 'UPDATE', 'VERSIONS', id, `Versão atualizada ${versionNumber}`, req);
+        await AuditService.logAction(req.user.id, req.user.username, 'UPDATE', 'VERSIONS', id.toString(), `Versão atualizada ${versionNumber}`, req);
 
         res.json({ message: 'Version updated' });
     } catch (error) {
+        console.error('Error updating version:', error);
         res.status(500).json({ error: 'Failed to update version' });
     }
 });
 
 router.delete('/:id', authenticateToken, async (req: any, res) => {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
     try {
         const db = getDb();
-        await db.run('DELETE FROM versions WHERE id = ?', id); // Cascade delete handles scripts
+        await db.version.delete({
+            where: { id }
+        });
 
-        await AuditService.logAction(req.user.id, req.user.username, 'DELETE', 'VERSIONS', id, 'Versão excluída', req);
+        await AuditService.logAction(req.user.id, req.user.username, 'DELETE', 'VERSIONS', id.toString(), 'Versão excluída', req);
 
         res.json({ message: 'Version deleted' });
     } catch (error) {
+        console.error('Error deleting version:', error);
         res.status(500).json({ error: 'Failed to delete version' });
     }
 });

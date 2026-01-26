@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { UsefulDoc } from '../types';
@@ -475,3 +476,4 @@ export const UsefulDocs: React.FC<UsefulDocsProps> = ({ docs, setDocs }) => {
         </div>
     );
 };
+

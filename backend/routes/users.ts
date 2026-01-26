@@ -31,7 +31,9 @@ const upload = multer({ storage: storage });
 router.get('/', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const users = await db.all('SELECT id, username, role FROM users');
+        const users = await db.user.findMany({
+            select: { id: true, username: true, role: true }
+        });
         res.json(users);
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -43,7 +45,10 @@ router.get('/', authenticateToken, async (req: any, res) => {
 router.get('/me', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const user = await db.get('SELECT id, username, profilePicture, role FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: parseInt(req.user.id) },
+            select: { id: true, username: true, profilePicture: true, role: true }
+        });
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -66,19 +71,28 @@ router.put('/me/password', authenticateToken, async (req: any, res) => {
 
     try {
         const db = getDb();
-        const user = await db.get('SELECT * FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: req.user.id }
+        });
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!user.password) {
+            return res.status(400).json({ error: 'User does not have a password set' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password!);
         if (!isMatch) {
             return res.status(400).json({ error: 'Invalid current password' });
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, req.user.id]);
+        await db.user.update({
+            where: { id: req.user.id },
+            data: { password: hashedPassword }
+        });
 
         await AuditService.logAction(req.user.id, req.user.username, 'UPDATE_PASSWORD', 'USERS', req.user.id.toString(), 'Usuário atualizou sua senha', req);
 
@@ -99,7 +113,10 @@ router.put('/me/profile-picture', authenticateToken, upload.single('profilePictu
         const db = getDb();
         const profilePictureUrl = `/api/uploads/profiles/${req.file.filename}`;
 
-        await db.run('UPDATE users SET profilePicture = ? WHERE id = ?', [profilePictureUrl, req.user.id]);
+        await db.user.update({
+            where: { id: req.user.id },
+            data: { profilePicture: profilePictureUrl }
+        });
 
         await AuditService.logAction(req.user.id, req.user.username, 'UPDATE_PROFILE_PICTURE', 'USERS', req.user.id.toString(), 'Usuário atualizou foto de perfil', req);
 
@@ -114,7 +131,10 @@ router.put('/me/profile-picture', authenticateToken, upload.single('profilePictu
 router.delete('/me/profile-picture', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const user = await db.get('SELECT profilePicture FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: req.user.id },
+            select: { profilePicture: true }
+        });
 
         if (user && user.profilePicture) {
             // Construct absolute path to the file
@@ -128,7 +148,10 @@ router.delete('/me/profile-picture', authenticateToken, async (req: any, res) =>
             }
         }
 
-        await db.run('UPDATE users SET profilePicture = NULL WHERE id = ?', req.user.id);
+        await db.user.update({
+            where: { id: req.user.id },
+            data: { profilePicture: null }
+        });
 
         await AuditService.logAction(req.user.id, req.user.username, 'DELETE_PROFILE_PICTURE', 'USERS', req.user.id.toString(), 'Usuário removeu foto de perfil', req);
 
@@ -148,7 +171,10 @@ router.delete('/:id', authenticateToken, async (req: any, res) => {
 
     try {
         const db = getDb();
-        await db.run('DELETE FROM users WHERE id = ?', req.params.id);
+        const userIdToDelete = parseInt(req.params.id);
+        await db.user.delete({
+            where: { id: userIdToDelete }
+        });
 
         await AuditService.logAction(req.user.id, req.user.username, 'DELETE_USER', 'USERS', req.params.id, 'Admin excluiu usuário', req);
 
@@ -167,25 +193,22 @@ router.put('/:id', authenticateToken, async (req: any, res) => {
     }
 
     const { username, password } = req.body;
-    const userId = req.params.id;
+    const userId = parseInt(req.params.id);
 
     try {
         const db = getDb();
 
-        if (username) {
-            await db.run('UPDATE users SET username = ? WHERE id = ?', [username, userId]);
-        }
+        const updateData: any = {};
+        if (username) updateData.username = username;
+        if (password) updateData.password = await bcrypt.hash(password, 10);
+        if (req.body.role) updateData.role = req.body.role;
 
-        if (password) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            await db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
-        }
+        await db.user.update({
+            where: { id: userId },
+            data: updateData
+        });
 
-        if (req.body.role) {
-            await db.run('UPDATE users SET role = ? WHERE id = ?', [req.body.role, userId]);
-        }
-
-        await AuditService.logAction(req.user.id, req.user.username, 'UPDATE_USER', 'USERS', userId, `Admin atualizou usuário ${userId} (usuário: ${username || 'inalterado'}, função: ${req.body.role || 'inalterado'})`, req);
+        await AuditService.logAction(req.user.id, req.user.username, 'UPDATE_USER', 'USERS', userId.toString(), `Admin atualizou usuário ${userId} (usuário: ${username || 'inalterado'}, função: ${req.body.role || 'inalterado'})`, req);
 
         res.json({ message: 'User updated successfully' });
     } catch (error) {

@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Upload, FileText, Download, Trash2, Share2, File, FileCode, Image as ImageIcon, Folder, FolderPlus, ChevronRight, Home, ArrowLeft, LayoutGrid, List as ListIcon, Eye, X } from 'lucide-react';
@@ -607,3 +608,4 @@ export const Manuals: React.FC = () => {
         </div>
     );
 };
+

@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { Button } from './Button';
 import { Lock, User, UserPlus, ArrowLeft } from 'lucide-react';
@@ -141,3 +142,4 @@ export const Register: React.FC<RegisterProps> = ({ onLoginClick }) => {
         </div>
     );
 };
+

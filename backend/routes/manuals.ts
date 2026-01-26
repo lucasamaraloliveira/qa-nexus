@@ -64,11 +64,17 @@ router.get('/', async (req, res) => {
         const db = getDb();
         const parentId = req.query.parentId as string || null;
 
-        let query = 'SELECT * FROM manuals WHERE parentId IS ? ORDER BY isFolder DESC, name ASC';
-        const manuals = await db.all(query, [parentId]);
+        const manuals = await db.manual.findMany({
+            where: { parentId: parentId },
+            orderBy: [
+                { isFolder: 'desc' },
+                { name: 'asc' }
+            ]
+        });
 
         res.json(manuals);
     } catch (error) {
+        console.error('Error fetching manuals:', error);
         res.status(500).json({ error: 'Failed to fetch manuals' });
     }
 });
@@ -83,17 +89,23 @@ router.post('/folder', authenticateToken, async (req: any, res) => {
             return res.status(400).json({ error: 'Folder name is required' });
         }
 
-        const result = await db.run(
-            'INSERT INTO manuals (name, originalName, type, isFolder, parentId, uploadDate, size) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [name, name, 'folder', 1, parentId || null, new Date().toISOString(), 0]
-        );
+        const newFolder = await db.manual.create({
+            data: {
+                name,
+                originalName: name,
+                type: 'folder',
+                isFolder: true,
+                parentId: parentId || null,
+                uploadDate: new Date().toISOString(),
+                size: 0
+            }
+        });
 
-        const newFolder = await db.get('SELECT * FROM manuals WHERE id = ?', result.lastID);
-
-        await AuditService.logAction(req.user.id, req.user.username, 'CREATE', 'MANUALS', result.lastID?.toString() || '', `Pasta criada ${name}`, req);
+        await AuditService.logAction(req.user.id, req.user.username, 'CREATE', 'MANUALS', newFolder.id.toString(), `Pasta criada ${name}`, req);
 
         res.json(newFolder);
     } catch (error) {
+        console.error('Error creating folder:', error);
         res.status(500).json({ error: 'Failed to create folder' });
     }
 });
@@ -115,23 +127,27 @@ router.post('/', authenticateToken, (req, res, next) => {
 
     try {
         const db = getDb();
-        const { filename, originalname, mimetype, size, path: filePath } = req.file;
+        const { filename, originalname, mimetype, size } = req.file;
         const parentId = req.body.parentId || null;
         console.log('File uploaded:', filename, size, 'Parent:', parentId);
         const uploadDate = new Date().toISOString();
 
-        // Sanitize the display name as well
         const safeDisplayName = sanitizeFilename(originalname);
 
-        // We store the relative path or filename to serve it statically
-        const result = await db.run(
-            'INSERT INTO manuals (name, originalName, path, type, size, uploadDate, parentId, isFolder) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [safeDisplayName, originalname, filename, mimetype, size, uploadDate, parentId, 0]
-        );
+        const newManual = await db.manual.create({
+            data: {
+                name: safeDisplayName,
+                originalName: originalname,
+                path: filename,
+                type: mimetype,
+                size: size,
+                uploadDate: uploadDate,
+                parentId: parentId,
+                isFolder: false
+            }
+        });
 
-        const newManual = await db.get('SELECT * FROM manuals WHERE id = ?', result.lastID);
-
-        await AuditService.logAction(req.user.id, req.user.username, 'UPLOAD', 'MANUALS', result.lastID?.toString() || '', `Arquivo enviado ${originalname}`, req);
+        await AuditService.logAction(req.user.id, req.user.username, 'UPLOAD', 'MANUALS', newManual.id.toString(), `Arquivo enviado ${originalname}`, req);
 
         res.json(newManual);
     } catch (error) {
@@ -142,39 +158,35 @@ router.post('/', authenticateToken, (req, res, next) => {
 
 // Delete a manual or folder
 router.delete('/:id', authenticateToken, async (req: any, res) => {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
     try {
         const db = getDb();
-        const manual = await db.get('SELECT * FROM manuals WHERE id = ?', id);
+        const manual = await db.manual.findUnique({
+            where: { id }
+        });
 
         if (!manual) {
             return res.status(404).json({ error: 'Manual not found' });
         }
 
-        // If it's a folder, we should ideally delete recursively, but for now let's just delete the folder
-        // and let the user delete contents first or implement recursive delete later.
-        // Or simple recursive delete:
         if (manual.isFolder) {
-            // Delete all children (one level deep for now, or use recursive CTE if sqlite supports it well enough/simple logic)
-            // For simplicity in this MVP, we'll just delete the folder entry. 
-            // Ideally: await db.run('DELETE FROM manuals WHERE parentId = ?', id);
-            // But files on disk need to be deleted too.
-            // Let's just delete the folder entry for now as per "Delete" requirement.
-        } else {
-            // Delete from filesystem
+            // Recurso não implementado no banco original também
+        } else if (manual.path) {
             const filePath = path.join(__dirname, '../uploads', manual.path);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
             }
         }
 
-        // Delete from DB
-        await db.run('DELETE FROM manuals WHERE id = ?', id);
+        await db.manual.delete({
+            where: { id }
+        });
 
-        await AuditService.logAction(req.user.id, req.user.username, 'DELETE', 'MANUALS', id, `Excluído ${manual.isFolder ? 'pasta' : 'arquivo'} ${manual.name}`, req);
+        await AuditService.logAction(req.user.id, req.user.username, 'DELETE', 'MANUALS', id.toString(), `Excluído ${manual.isFolder ? 'pasta' : 'arquivo'} ${manual.name}`, req);
 
         res.json({ message: 'Manual deleted' });
     } catch (error) {
+        console.error('Error deleting manual:', error);
         res.status(500).json({ error: 'Failed to delete manual' });
     }
 });

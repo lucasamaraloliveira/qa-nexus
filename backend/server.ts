@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { initializeDatabase } from './database';
@@ -11,6 +12,8 @@ import usersRouter from './routes/users';
 import uploadRouter from './routes/upload';
 import uploadImageRouter from './routes/uploadImage';
 import path from 'path';
+import sitesRouter from './routes/sites';
+import logsRouter from './routes/logs';
 
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -132,6 +135,8 @@ app.use('/api/upload/image', uploadImageRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/changelog', changelogRouter);
 app.use('/api/audit-logs', auditRoutes);
+app.use('/api/sites', sitesRouter);
+app.use('/api/monitoring-logs', logsRouter);
 
 // Force logout endpoint
 app.post('/api/users/:username/kick', (req, res) => {

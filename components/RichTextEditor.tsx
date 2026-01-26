@@ -1,3 +1,4 @@
+"use client";
 import React, { useRef, useEffect, useState } from 'react';
 import { Bold, Italic, Underline, Undo, Redo, Palette, List, ListOrdered } from 'lucide-react';
 
@@ -5,16 +6,20 @@ interface RichTextEditorProps {
     content: string;
     onChange: (content: string) => void;
     className?: string;
+    placeholder?: string;
 }
 
-export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, className }) => {
+export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, className, placeholder }) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
     // Sync content only if it's significantly different to avoid cursor jumping
     useEffect(() => {
         if (editorRef.current && editorRef.current.innerHTML !== content) {
-            if (content === '' || editorRef.current.innerHTML === '') {
+            // If the content is empty, clear the editor to show the placeholder (if any)
+            if (content === '' || content === '<p><br></p>') {
+                editorRef.current.innerHTML = '';
+            } else {
                 editorRef.current.innerHTML = content;
             }
         }
@@ -156,9 +161,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
                 ref={editorRef}
                 contentEditable
                 onInput={handleInput}
-                className="flex-1 p-4 outline-none overflow-y-auto min-h-0 text-slate-800 dark:text-slate-200 prose dark:prose-invert max-w-none"
+                data-placeholder={placeholder}
+                className="flex-1 p-4 outline-none overflow-y-auto min-h-0 text-slate-800 dark:text-slate-200 prose dark:prose-invert max-w-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:italic"
                 style={{ minHeight: '200px' }}
             />
         </div>
     );
 };
+

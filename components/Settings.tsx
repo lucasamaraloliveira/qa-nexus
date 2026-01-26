@@ -1,14 +1,15 @@
+"use client";
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Lock, Camera, Save, Loader2, Users, Trash2, Edit2, X, ChevronDown } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { ConfirmModal } from './ConfirmModal';
-import { permissionService, MODULES } from '../services/permissionService';
-import { Role } from '../types';
+import { permissionService, MODULES, ModulePermission } from '../services/permissionService';
+import { Role } from './../types';
 
 export const Settings: React.FC = () => {
     const { user, profilePicture, token, updateUser } = useAuth();
-    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'users' | 'permissions'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'users' | 'permissions' | 'audit'>('profile');
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -30,7 +31,7 @@ export const Settings: React.FC = () => {
     const [editRole, setEditRole] = useState('Tester');
 
     // Permissions State
-    const [permissions, setPermissions] = useState(permissionService.getPermissions());
+    const [permissions, setPermissions] = useState<ModulePermission[]>(permissionService.getPermissions());
 
     const togglePermission = (moduleId: string, role: Role) => {
         const newPermissions = permissions.map(p => {
@@ -619,7 +620,7 @@ export const Settings: React.FC = () => {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                         {MODULES.map((module) => {
-                                            const perm = permissions.find(p => p.id === module.id) || { allowedRoles: [] };
+                                            const perm = (permissions.find(p => p.id === module.id) || { allowedRoles: [] }) as any;
                                             return (
                                                 <tr key={module.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{module.label}</td>
@@ -642,7 +643,7 @@ export const Settings: React.FC = () => {
                                 {/* Mobile Card View */}
                                 <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                                     {MODULES.map((module) => {
-                                        const perm = permissions.find(p => p.id === module.id) || { allowedRoles: [] };
+                                        const perm = (permissions.find(p => p.id === module.id) || { allowedRoles: [] }) as any;
                                         return (
                                             <div key={module.id} className="p-4">
                                                 <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-3">{module.label}</h3>
@@ -745,3 +746,4 @@ export const Settings: React.FC = () => {
         </div>
     );
 };
+

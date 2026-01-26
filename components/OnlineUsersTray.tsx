@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useRef } from 'react';
 import { Users, Monitor, X } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
@@ -105,3 +106,4 @@ export const OnlineUsersTray: React.FC<OnlineUsersTrayProps> = ({ isOpen, onClos
         </div>
     );
 };
+

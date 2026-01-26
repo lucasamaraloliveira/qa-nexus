@@ -9,7 +9,10 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const user = await db.get('SELECT role FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: parseInt(req.user.id) },
+            select: { role: true }
+        });
         const role = user ? user.role : req.user.role;
 
         // Check permissions - only Root and Admin can view logs
@@ -53,7 +56,10 @@ router.get('/settings', authenticateToken, async (req: any, res) => {
 router.put('/settings', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const user = await db.get('SELECT role FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: parseInt(req.user.id) },
+            select: { role: true }
+        });
         const role = user ? user.role : req.user.role;
 
         if (role !== 'Root') {
@@ -71,7 +77,10 @@ router.put('/settings', authenticateToken, async (req: any, res) => {
 router.delete('/', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const user = await db.get('SELECT role FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: parseInt(req.user.id) },
+            select: { role: true }
+        });
         const role = user ? user.role : req.user.role;
 
         if (role !== 'Root') {
@@ -80,7 +89,7 @@ router.delete('/', authenticateToken, async (req: any, res) => {
         await AuditService.clearLogs();
 
         // Log the clear action itself (it will be the first new log)
-        await AuditService.logAction(req.user.id, req.user.username, 'DELETE', 'AUDIT', 'ALL', 'Limpou todos os logs de auditoria', req);
+        await AuditService.logAction(parseInt(req.user.id), req.user.username, 'DELETE', 'AUDIT', 'ALL', 'Limpou todos os logs de auditoria', req);
 
         res.json({ message: 'Logs de auditoria limpos com sucesso' });
     } catch (error) {
@@ -93,7 +102,10 @@ router.delete('/', authenticateToken, async (req: any, res) => {
 router.post('/cache/clear', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const user = await db.get('SELECT role FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: parseInt(req.user.id) },
+            select: { role: true }
+        });
         const role = user ? user.role : req.user.role;
 
         if (role !== 'Root') {
@@ -125,7 +137,10 @@ router.get('/status', authenticateToken, async (req: any, res) => {
 router.post('/status', authenticateToken, async (req: any, res) => {
     try {
         const db = getDb();
-        const user = await db.get('SELECT role FROM users WHERE id = ?', req.user.id);
+        const user = await db.user.findUnique({
+            where: { id: parseInt(req.user.id) },
+            select: { role: true }
+        });
         const role = user ? user.role : req.user.role;
 
         if (role !== 'Root') {
@@ -138,7 +153,7 @@ router.post('/status', authenticateToken, async (req: any, res) => {
         await AuditService.toggleGlobalLogging(enabled);
 
         const action = enabled ? 'Iniciou' : 'Parou';
-        await AuditService.logAction(req.user.id, req.user.username, 'UPDATE', 'AUDIT', 'GLOBAL', `${action} o serviço de auditoria`, req);
+        await AuditService.logAction(parseInt(req.user.id), req.user.username, 'UPDATE', 'AUDIT', 'GLOBAL', `${action} o serviço de auditoria`, req);
 
         res.json({ message: `Serviço de auditoria ${enabled ? 'iniciado' : 'parado'} com sucesso` });
     } catch (error) {
@@ -148,5 +163,3 @@ router.post('/status', authenticateToken, async (req: any, res) => {
 });
 
 export default router;
-
-

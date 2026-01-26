@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useRef } from 'react';
 import { useSocket } from '../contexts/SocketContext';
 
@@ -56,3 +57,4 @@ export const ActivityTracker: React.FC<ActivityTrackerProps> = ({ currentTab }) 
 
     return null; // This component doesn't render anything visible
 };
+

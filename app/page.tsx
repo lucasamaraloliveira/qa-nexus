@@ -1,29 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Layout } from './components/Layout';
-import { Dashboard } from './components/Dashboard';
-import { VersionControl } from './components/VersionControl';
-import { BuildDocs } from './components/BuildDocs';
-import { UsefulDocs } from './components/UsefulDocs';
-import { Manuals } from './components/Manuals';
-import { TestManager } from './components/TestManager';
-import { Settings } from './components/Settings';
-import { Login } from './components/Login';
-import { Register } from './components/Register';
-import { ThemeProvider } from './ThemeContext';
-import { LayoutProvider } from './contexts/LayoutContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { apiService } from './services/apiService';
-import { SocketProvider } from './contexts/SocketContext';
-import { ToastProvider } from './contexts/ToastContext';
-import { ActivityTracker } from './components/ActivityTracker';
-import { Changelog } from './components/Changelog';
-import { ChangelogManager } from './components/ChangelogManager';
-import AuditLogs from './components/AuditLogs';
-import { SessionExpiryModal } from './components/SessionExpiryModal';
-import { Version, BuildDoc, UsefulDoc, TestPlan } from './types';
-import { permissionService, MODULES } from './services/permissionService';
+"use client";
 
-const AppContent: React.FC = () => {
+import React, { useState, useEffect } from 'react';
+import { Layout } from '../components/Layout';
+import { Dashboard } from '../components/Dashboard';
+import { VersionControl } from '../components/VersionControl';
+import { BuildDocs } from '../components/BuildDocs';
+import { UsefulDocs } from '../components/UsefulDocs';
+import { Manuals } from '../components/Manuals';
+import { TestManager } from '../components/TestManager';
+import { Settings } from '../components/Settings';
+import { Login } from '../components/Login';
+import { Register } from '../components/Register';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/apiService';
+import { ActivityTracker } from '../components/ActivityTracker';
+import { Changelog } from '../components/Changelog';
+import { ChangelogManager } from '../components/ChangelogManager';
+import AuditLogs from '../components/AuditLogs';
+import { SessionExpiryModal } from '../components/SessionExpiryModal';
+import { Version, BuildDoc, UsefulDoc, TestPlan } from '../types';
+import { permissionService, MODULES } from '../services/permissionService';
+
+export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { isAuthenticated, user } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
@@ -58,7 +56,6 @@ const AppContent: React.FC = () => {
       }
     };
 
-    fetchData();
     fetchData();
   }, [isAuthenticated]);
 
@@ -132,22 +129,4 @@ const AppContent: React.FC = () => {
       {renderContent()}
     </Layout>
   );
-};
-
-function App() {
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        <SocketProvider>
-          <LayoutProvider>
-            <ToastProvider>
-              <AppContent />
-            </ToastProvider>
-          </LayoutProvider>
-        </SocketProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  );
 }
-
-export default App;

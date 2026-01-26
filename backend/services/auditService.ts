@@ -15,8 +15,12 @@ export class AuditService {
 
         try {
             const db = getDb();
-            const configResult = await db.get('SELECT value FROM system_settings WHERE key = ?', 'audit_config');
-            const globalResult = await db.get('SELECT value FROM system_settings WHERE key = ?', 'audit_global_enabled');
+            const configResult = await db.systemSetting.findUnique({
+                where: { key: 'audit_config' }
+            });
+            const globalResult = await db.systemSetting.findUnique({
+                where: { key: 'audit_global_enabled' }
+            });
 
             if (configResult && configResult.value) {
                 this.configCache = JSON.parse(configResult.value);
@@ -48,13 +52,17 @@ export class AuditService {
 
     static async updateConfig(newConfig: Record<string, boolean>) {
         const db = getDb();
-        await db.run('INSERT OR REPLACE INTO system_settings (key, value) VALUES (?, ?)', ['audit_config', JSON.stringify(newConfig)]);
+        await db.systemSetting.upsert({
+            where: { key: 'audit_config' },
+            update: { value: JSON.stringify(newConfig) },
+            create: { key: 'audit_config', value: JSON.stringify(newConfig) }
+        });
         this.configCache = newConfig;
         this.lastFetch = Date.now();
     }
 
     static async logAction(
-        userId: number | null,
+        userId: any,
         username: string,
         action: string,
         module: string,
@@ -63,6 +71,7 @@ export class AuditService {
         req?: any
     ) {
         try {
+            const parsedUserId = userId && typeof userId === 'string' ? parseInt(userId) : userId;
             if (!(await this.shouldLog(module))) {
                 return;
             }
@@ -89,11 +98,18 @@ export class AuditService {
                 }
             }
 
-            await db.run(
-                `INSERT INTO audit_logs (userId, username, action, module, resourceId, details, timestamp, ipAddress)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [userId, username, action, module, resourceId, details, timestamp, ipAddress]
-            );
+            await db.auditLog.create({
+                data: {
+                    userId: parsedUserId,
+                    username,
+                    action,
+                    module,
+                    resourceId,
+                    details,
+                    timestamp,
+                    ipAddress
+                }
+            });
         } catch (error) {
             console.error('Failed to log audit action:', error);
             // Don't throw, we don't want to break the main flow if logging fails
@@ -112,44 +128,29 @@ export class AuditService {
         const db = getDb();
         const page = filters.page || 1;
         const limit = filters.limit || 50;
-        const offset = (page - 1) * limit;
+        const skip = (page - 1) * limit;
 
-        let query = 'SELECT * FROM audit_logs WHERE 1=1';
-        const params: any[] = [];
-
-        if (filters.module) {
-            query += ' AND module = ?';
-            params.push(filters.module);
-        }
-
-        if (filters.action) {
-            query += ' AND action = ?';
-            params.push(filters.action);
-        }
-
+        const where: any = {};
+        if (filters.module) where.module = filters.module;
+        if (filters.action) where.action = filters.action;
         if (filters.username) {
-            query += ' AND username LIKE ?';
-            params.push(`%${filters.username}%`);
+            where.username = { contains: filters.username };
+        }
+        if (filters.startDate || filters.endDate) {
+            where.timestamp = {};
+            if (filters.startDate) where.timestamp.gte = filters.startDate;
+            if (filters.endDate) where.timestamp.lte = filters.endDate;
         }
 
-        if (filters.startDate) {
-            query += ' AND timestamp >= ?';
-            params.push(filters.startDate);
-        }
-
-        if (filters.endDate) {
-            query += ' AND timestamp <= ?';
-            params.push(filters.endDate);
-        }
-
-        const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as total');
-        const totalResult = await db.get(countQuery, params);
-        const total = totalResult.total;
-
-        query += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
-        params.push(limit, offset);
-
-        const logs = await db.all(query, params);
+        const [logs, total] = await Promise.all([
+            db.auditLog.findMany({
+                where,
+                orderBy: { timestamp: 'desc' },
+                take: limit,
+                skip
+            }),
+            db.auditLog.count({ where })
+        ]);
 
         return {
             logs,
@@ -165,7 +166,7 @@ export class AuditService {
 
     static async clearLogs() {
         const db = getDb();
-        await db.run('DELETE FROM audit_logs');
+        await db.auditLog.deleteMany({});
     }
 
     static async toggleGlobalLogging(enabled: boolean) {
@@ -173,7 +174,11 @@ export class AuditService {
             fs.appendFileSync('debug.log', `toggleGlobalLogging called with: ${enabled}\n`);
             const db = getDb();
             fs.appendFileSync('debug.log', `DB keys: ${Object.keys(db).join(',')}\n`);
-            await db.run('INSERT OR REPLACE INTO system_settings (key, value) VALUES (?, ?)', ['audit_global_enabled', String(enabled)]);
+            await db.systemSetting.upsert({
+                where: { key: 'audit_global_enabled' },
+                update: { value: String(enabled) },
+                create: { key: 'audit_global_enabled', value: String(enabled) }
+            });
             fs.appendFileSync('debug.log', 'DB run successful\n');
             this.globalEnabled = enabled;
         } catch (error) {

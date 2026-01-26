@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FileClock, CheckCircle2, Sparkles, Bug, Wrench, Plus, Settings, Trash2, ChevronDown, ChevronRight, Calendar, Pencil, Upload, ImageIcon, Loader2, X, Search, Download } from 'lucide-react';
@@ -486,7 +487,7 @@ export const ChangelogManager: React.FC = () => {
                         colSpan: 2,
                         styles: { minCellHeight: imgHeight + 10 },
                         image: item.image
-                    }]);
+                    } as any]);
 
                     autoTable(doc, {
                         startY: yPos,
@@ -629,7 +630,7 @@ export const ChangelogManager: React.FC = () => {
                     colSpan: 2,
                     styles: { minCellHeight: imgHeight + 10 },
                     image: item.image
-                }]);
+                } as any]);
 
                 autoTable(doc, {
                     startY: yPos,
@@ -713,7 +714,7 @@ export const ChangelogManager: React.FC = () => {
                                     <Settings className="w-4 h-4 mr-2" /> Sistemas
                                 </Button>
                             )}
-                            <Button variant="outline" onClick={handleExportPDF} className="flex-1 md:flex-none justify-center" disabled={filteredEntries.length === 0}>
+                            <Button variant="secondary" onClick={handleExportPDF} className="flex-1 md:flex-none justify-center" disabled={filteredEntries.length === 0}>
                                 <Download className="w-4 h-4 mr-2" /> Exportar PDF
                             </Button>
                             {!isSupport && (
@@ -1065,3 +1066,4 @@ export const ChangelogManager: React.FC = () => {
         </div >
     );
 };
+

@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { Users, Monitor, X } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
@@ -95,3 +96,4 @@ export const MobileOnlineUsersModal: React.FC<MobileOnlineUsersModalProps> = ({ 
         </div>
     );
 };
+

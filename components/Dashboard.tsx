@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { TestPlan, Version, Status } from '../types';

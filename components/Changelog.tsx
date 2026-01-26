@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { FileClock, CheckCircle2, Sparkles, Bug, Wrench, Smartphone, Layout as LayoutIcon, ChevronRight, Users, Download, ShieldCheck } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -682,3 +683,4 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, version }) => {
         </div>
     );
 };
+

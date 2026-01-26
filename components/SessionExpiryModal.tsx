@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './Button';
@@ -112,3 +113,4 @@ export const SessionExpiryModal: React.FC = () => {
         </div>
     );
 };
+

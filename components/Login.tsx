@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './Button';
@@ -102,3 +103,4 @@ export const Login: React.FC<LoginProps> = ({ onRegisterClick }) => {
         </div>
     );
 };
+

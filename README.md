@@ -1,113 +1,36 @@
-# Documentação do Sistema - QA Nexus
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## 1. Visão Geral
-O **QA Nexus** é uma plataforma centralizada para gestão de qualidade (QA), controle de versões, documentação e auditoria. Ele serve como um hub para equipes de QA e desenvolvimento, permitindo o gerenciamento de planos de teste, scripts de banco de dados, manuais e logs de auditoria.
+## Getting Started
 
-## 2. Arquitetura Técnica
+First, run the development server:
 
-O sistema é construído utilizando uma arquitetura moderna de Single Page Application (SPA) com um backend em Node.js.
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-### Frontend
-- **Framework**: React 19 (com TypeScript)
-- **Build Tool**: Vite
-- **Estilização**: Tailwind CSS
-- **Ícones**: Lucide React
-- **Gerenciamento de Estado**: Context API (AuthContext, LayoutContext, ThemeContext, SocketContext)
-- **Comunicação Real-time**: Socket.io-client
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express
-- **Banco de Dados**: SQLite (arquivo `backend/database.sqlite`)
-- **Autenticação**: JWT (JSON Web Tokens)
-- **Uploads**: Multer
-- **Logs**: Sistema de auditoria personalizado
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## 3. Módulos Principais
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-1.  **Dashboard**: Visão geral com métricas e atalhos.
-2.  **Versões & Scripts**: Controle de versões de software e repositório de scripts SQL/Shell. Suporta organização por pastas.
-3.  **Docs de Build**: Documentação técnica de processos de build.
-4.  **Docs Úteis**: Repositório de conhecimentos gerais e snippets.
-5.  **Manuais**: Sistema de arquivos para manuais e procedimentos (suporta upload e pastas).
-6.  **Gestão de Testes**: Criação e execução de planos de teste e casos de teste.
-7.  **Changelog**: Histórico de mudanças do sistema (gerenciado via UI).
-8.  **Audit Logs**: Registro detalhado de ações dos usuários (segurança e rastreabilidade).
-9.  **Configurações**: Gerenciamento de usuários, permissões e configurações do sistema.
+## Learn More
 
-## 4. Guia de Manutenção
+To learn more about Next.js, take a look at the following resources:
 
-### Como Rodar o Projeto
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-O projeto é dividido em dois processos terminais (Frontend e Backend).
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-**Pré-requisitos**: Node.js instalado.
+## Deploy on Vercel
 
-1.  **Backend**:
-    ```bash
-    cd backend
-    npm install  # Apenas na primeira vez
-    npm start
-    ```
-    *O servidor rodará na porta 3001.*
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-2.  **Frontend**:
-    ```bash
-    # Na raiz do projeto
-    npm install  # Apenas na primeira vez
-    npm run dev
-    ```
-    *O frontend rodará geralmente na porta 3000 ou 5173.*
-
-### Estrutura de Pastas Importante
-
-*   `backend/`: Código do servidor.
-    *   `server.ts`: Ponto de entrada do backend.
-    *   `routes/`: Rotas da API (endpoints).
-    *   `services/`: Lógica de negócios (ex: `auditService.ts`).
-    *   `database.ts`: Configuração e queries do SQLite.
-*   `components/`: Componentes React (UI).
-    *   `Layout.tsx`: Estrutura principal (Sidebar, Header).
-    *   `Changelog.tsx`: Modal de novidades.
-*   `contexts/`: Gerenciamento de estado global.
-*   `services/`: Serviços do frontend (chamadas API).
-    *   `apiService.ts`: Centraliza todas as chamadas HTTP.
-    *   `permissionService.ts`: Lógica de permissões (RBAC).
-
-### Tarefas de Manutenção Comuns
-
-#### 1. Atualizar a Versão do Sistema
-Para lançar uma nova versão (ex: de 3.1.1 para 3.1.2):
-
-1.  **Atualizar `package.json`**: Mude o campo `"version"`.
-2.  **Atualizar `components/Layout.tsx`**:
-    *   Procure pela string da versão antiga (ex: "3.1.1") e substitua pela nova.
-    *   Atualize a lógica de notificação de novidades (`lastSeenVersion`).
-3.  **Atualizar `components/Changelog.tsx`**:
-    *   Adicione um novo objeto ao array `changes` no início do arquivo.
-    *   Siga o padrão existente (versão, data, tipo, features).
-
-#### 2. Adicionar um Novo Módulo
-1.  Crie o componente em `components/NovoModulo.tsx`.
-2.  Adicione a rota no `App.tsx`.
-3.  Registre o módulo em `services/permissionService.ts` (arrays `MODULES` e `DEFAULT_PERMISSIONS`).
-4.  Adicione o item de navegação em `components/Layout.tsx` (`navItems`).
-
-#### 3. Gerenciar Permissões
-As permissões são baseadas em "Roles" (Root, Admin, Tester, Viewer, Support).
-*   A lógica fica em `services/permissionService.ts`.
-*   Para alterar quem acessa o quê por padrão, edite `DEFAULT_PERMISSIONS`.
-
-#### 4. Backup do Banco de Dados
-O banco de dados é um arquivo único: `backend/database.sqlite`.
-*   Para fazer backup, basta copiar este arquivo para um local seguro.
-*   Recomenda-se parar o backend antes de copiar para garantir integridade.
-
-#### 5. Debug de Auditoria
-Se os logs não estiverem aparecendo:
-*   Verifique a tabela `system_settings` no banco de dados.
-*   A coluna `audit_config` deve ter o módulo desejado como `true`.
-*   O serviço `AuditService` tem um cache de 60 segundos.
-
----
-*Documento gerado em 03/12/2025 para auxiliar na manutenção e evolução do QA Nexus.*
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

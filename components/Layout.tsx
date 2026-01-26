@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { LayoutTemplate, GitBranch, FileText, FlaskConical, Settings, LogOut, Moon, Sun, BookOpen, FolderOpen, ChevronRight, ChevronLeft, X, Menu, User, FileClock, Sparkles, ShieldCheck } from 'lucide-react';
 import { useTheme } from '../ThemeContext';

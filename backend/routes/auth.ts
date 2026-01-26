@@ -16,7 +16,9 @@ router.post('/register', async (req, res) => {
 
     try {
         const db = getDb();
-        const existingUser = await db.get('SELECT * FROM users WHERE username = ?', username);
+        const existingUser = await db.user.findUnique({
+            where: { username }
+        });
 
         if (existingUser) {
             return res.status(409).json({ error: 'Username already exists' });
@@ -24,10 +26,9 @@ router.post('/register', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await db.run(
-            'INSERT INTO users (username, password) VALUES (?, ?)',
-            [username, hashedPassword]
-        );
+        await db.user.create({
+            data: { username, password: hashedPassword }
+        });
 
         // Log Registration (using 0 or null for userId as it's new, or fetch it. For now let's just log the username)
         // We don't have the new ID easily without another query or using the result of insert. 
@@ -50,24 +51,33 @@ router.post('/login', async (req, res) => {
 
     try {
         const db = getDb();
-        const user = await db.get('SELECT * FROM users WHERE username = ?', username);
+        const user = await db.user.findUnique({
+            where: { username }
+        });
 
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        if (!user.password || !user.username) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password!);
 
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
+        const usernameToLog = user.username || 'unknown';
+        const roleToToken = user.role || 'Tester';
+
+        const token = jwt.sign({ id: user.id, username: usernameToLog, role: roleToToken }, SECRET_KEY, { expiresIn: '24h' });
 
         // Log Login
-        await AuditService.logAction(user.id, user.username, 'LOGIN', 'AUTH', '', 'Usuário realizou login', req);
+        await AuditService.logAction(user.id, usernameToLog, 'LOGIN', 'AUTH', '', 'Usuário realizou login', req);
 
-        res.json({ token, username: user.username, role: user.role, id: user.id });
+        res.json({ token, username: usernameToLog, role: roleToToken, id: user.id });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Failed to login' });

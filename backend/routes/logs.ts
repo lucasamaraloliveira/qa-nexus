@@ -4,22 +4,17 @@ import { getDb } from '../database';
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-    const { siteId } = req.query;
+    const siteId = req.query.siteId ? parseInt(req.query.siteId as string) : undefined;
     try {
         const db = getDb();
-        let query = 'SELECT * FROM logs';
-        const params: any[] = [];
-
-        if (siteId) {
-            query += ' WHERE site_id = ?';
-            params.push(siteId);
-        }
-
-        query += ' ORDER BY timestamp DESC LIMIT 100';
-
-        const logs = await db.all(query, params);
+        const logs = await db.monitoringLog.findMany({
+            where: siteId ? { siteId } : {},
+            orderBy: { timestamp: 'desc' },
+            take: 100
+        });
         res.json(logs);
     } catch (error) {
+        console.error('Error fetching logs:', error);
         res.status(500).json({ error: 'Failed to fetch logs' });
     }
 });
@@ -28,12 +23,16 @@ router.post('/', async (req, res) => {
     const { siteId, status, responseTime } = req.body;
     try {
         const db = getDb();
-        await db.run(
-            'INSERT INTO logs (site_id, status, response_time) VALUES (?, ?, ?)',
-            [siteId, status, responseTime]
-        );
+        await db.monitoringLog.create({
+            data: {
+                siteId: parseInt(siteId),
+                status: parseInt(status),
+                responseTime: parseInt(responseTime)
+            }
+        });
         res.json({ message: 'Log added' });
     } catch (error) {
+        console.error('Error adding log:', error);
         res.status(500).json({ error: 'Failed to add log' });
     }
 });
