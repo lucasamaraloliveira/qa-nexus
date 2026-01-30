@@ -15,7 +15,7 @@ export const Settings: React.FC = () => {
 
     // Profile Picture State
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(profilePicture ? `http://localhost:3001${profilePicture}` : null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(profilePicture ? profilePicture : null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // Password State
@@ -154,7 +154,7 @@ export const Settings: React.FC = () => {
         formData.append('profilePicture', selectedFile);
 
         try {
-            const response = await fetch('http://localhost:3001/api/users/me/profile-picture', {
+            const response = await fetch('/api/users/me/profile-picture', {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -186,7 +186,7 @@ export const Settings: React.FC = () => {
         setMessage(null);
 
         try {
-            const response = await fetch('http://localhost:3001/api/users/me/profile-picture', {
+            const response = await fetch('/api/users/me/profile-picture', {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -222,7 +222,7 @@ export const Settings: React.FC = () => {
         setMessage(null);
 
         try {
-            const response = await fetch('http://localhost:3001/api/users/me/password', {
+            const response = await fetch('/api/users/me/password', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

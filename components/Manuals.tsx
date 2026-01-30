@@ -59,7 +59,7 @@ export const Manuals: React.FC = () => {
         setPreviewContent(null);
 
         try {
-            const url = `http://localhost:3001/api/uploads/${previewFile.path}`;
+            const url = `/api/uploads/${previewFile.path}`;
 
             if (previewFile.type.includes('sheet') || previewFile.type.includes('excel') || previewFile.name.endsWith('.xls') || previewFile.name.endsWith('.xlsx')) {
                 const response = await fetch(url);
@@ -215,7 +215,7 @@ export const Manuals: React.FC = () => {
 
     const handleDownload = (path: string, originalName: string) => {
         const link = document.createElement('a');
-        link.href = `http://localhost:3001/api/uploads/${path}`;
+        link.href = `/api/uploads/${path}`;
         link.download = originalName;
         document.body.appendChild(link);
         link.click();
@@ -233,7 +233,7 @@ export const Manuals: React.FC = () => {
     };
 
     const handleShare = async (path: string) => {
-        const url = `http://localhost:3001/api/uploads/${path}`;
+        const url = `${window.location.origin}/api/uploads/${path}`;
         try {
             await navigator.clipboard.writeText(url);
             showToast({ message: 'Link copiado para a área de transferência!', type: 'success' });
@@ -551,13 +551,13 @@ export const Manuals: React.FC = () => {
                             <div className="w-full h-full bg-white dark:bg-slate-900 p-8 overflow-auto shadow-sm rounded-lg prose dark:prose-invert max-w-none [&>table]:w-full [&>table]:border-collapse [&>table]:border [&>table]:border-slate-200 dark:[&>table]:border-slate-700 [&>table_td]:border [&>table_td]:border-slate-200 dark:[&>table_td]:border-slate-700 [&>table_td]:p-2 [&>table_th]:border [&>table_th]:border-slate-200 dark:[&>table_th]:border-slate-700 [&>table_th]:p-2 [&>table_th]:bg-slate-50 dark:[&>table_th]:bg-slate-800" dangerouslySetInnerHTML={{ __html: previewContent }} />
                         ) : previewFile?.type.includes('image') ? (
                             <img
-                                src={`http://localhost:3001/api/uploads/${previewFile.path}`}
+                                src={`/api/uploads/${previewFile.path}`}
                                 alt={previewFile.name}
                                 className="max-w-full max-h-full object-contain shadow-lg rounded-lg"
                             />
                         ) : previewFile?.type.includes('pdf') ? (
                             <iframe
-                                src={`http://localhost:3001/api/uploads/${previewFile.path}`}
+                                src={`/api/uploads/${previewFile.path}`}
                                 className="w-full h-full rounded-lg shadow-sm bg-white"
                                 title="PDF Preview"
                             />
