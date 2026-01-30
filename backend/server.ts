@@ -163,10 +163,18 @@ app.post('/api/users/:username/kick', (req, res) => {
 });
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
-initializeDatabase().then(() => {
-    httpServer.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
+// Export app for serverless use
+export { app };
+
+// Only listen if this file is run directly (not as a module/serverless function)
+if (require.main === module) {
+    initializeDatabase().then(() => {
+        httpServer.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`);
+        });
+    }).catch(err => {
+        console.error('Failed to initialize database:', err);
     });
-}).catch(err => {
-    console.error('Failed to initialize database:', err);
-});
+}
+
+export default app;
