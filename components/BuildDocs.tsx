@@ -4,8 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { BuildDoc } from '../types';
 import { Button } from './Button';
 import { Modal } from './Modal';
-import { improveBuildDoc } from '../services/geminiService';
-import { Wand2, Save, FileCode, Plus, LayoutTemplate, Trash2, Pencil, Search, ChevronLeft, Loader2, FileText } from 'lucide-react';
+import { Save, FileCode, Plus, LayoutTemplate, Trash2, Pencil, Search, ChevronLeft, Loader2, FileText } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { RichTextEditor } from './RichTextEditor';
 import { useToast } from '../contexts/ToastContext';
@@ -18,7 +17,6 @@ interface BuildDocsProps {
 
 export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(docs[0]?.id || null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [newSystemName, setNewSystemName] = useState('');
@@ -64,21 +62,6 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
 
   const inputClass = "w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors";
 
-  const handleImproveContent = async () => {
-    if (!selectedDoc) return;
-    setIsGenerating(true);
-    try {
-      const improved = await improveBuildDoc(selectedDoc.content);
-      // Just update local state for preview, user must click save to persist
-      updateDocContentLocal(improved);
-      setIsEditing(true); // Auto-enable edit mode
-      showToast({ message: 'Conteúdo melhorado com IA!', type: 'success' });
-    } catch (error) {
-      showToast({ message: "Erro ao melhorar documentação. Verifique a API Key.", type: 'error' });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const updateDocContentLocal = (newContent: string) => {
     if (!selectedDocId) return;
@@ -349,16 +332,6 @@ export const BuildDocs: React.FC<BuildDocsProps> = ({ docs, setDocs }) => {
                   {!isViewer && !isSupport && (
                     !isEditing ? (
                       <>
-                        <Button
-                          onClick={handleImproveContent}
-                          variant="secondary"
-                          size="sm"
-                          isLoading={isGenerating}
-                          className="text-purple-600 border-purple-200 hover:bg-purple-50 dark:bg-purple-900/10 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-900/20 h-8 px-3 text-xs"
-                        >
-                          {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Wand2 className="w-3.5 h-3.5 mr-2" />}
-                          Melhorar com IA
-                        </Button>
                         <Button size="sm" onClick={() => setIsEditing(true)} className="h-8 px-3 text-xs">
                           <Pencil className="w-3.5 h-3.5 mr-2" /> Editar
                         </Button>

@@ -4,12 +4,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { UsefulDoc } from '../types';
 import { Button } from './Button';
 import { Modal } from './Modal';
-import { Wand2, Save, FileText, Plus, BookOpen, Trash2, Pencil, MoreVertical, Search, ChevronLeft, Loader2, Upload, FileIcon } from 'lucide-react';
+import { Save, FileText, Plus, BookOpen, Trash2, Pencil, MoreVertical, Search, ChevronLeft, Loader2, Upload, FileIcon } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { RichTextEditor } from './RichTextEditor';
 import { useToast } from '../contexts/ToastContext';
 import { ConfirmModal } from './ConfirmModal';
-import { improveDocumentation } from '../services/geminiService';
 
 interface UsefulDocsProps {
     docs: UsefulDoc[];
@@ -32,7 +31,6 @@ export const UsefulDocs: React.FC<UsefulDocsProps> = ({ docs, setDocs }) => {
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [totalMatches, setTotalMatches] = useState(0);
     const contentRef = useRef<HTMLDivElement>(null); // Ref for content container
-    const [isImproving, setIsImproving] = useState(false);
 
     const { showToast } = useToast();
     const { user } = useAuth();
@@ -163,20 +161,6 @@ export const UsefulDocs: React.FC<UsefulDocsProps> = ({ docs, setDocs }) => {
         }
     };
 
-    const handleImproveContent = async () => {
-        if (!selectedDoc) return;
-        setIsImproving(true);
-        try {
-            const improved = await improveDocumentation(selectedDoc.content);
-            updateDocContentLocal(improved);
-            setIsEditing(true); // Auto-enable edit mode
-            showToast({ message: 'Conteúdo melhorado com IA!', type: 'success' });
-        } catch (error) {
-            showToast({ message: "Erro ao melhorar documentação.", type: 'error' });
-        } finally {
-            setIsImproving(false);
-        }
-    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0]) return;
@@ -366,16 +350,6 @@ export const UsefulDocs: React.FC<UsefulDocsProps> = ({ docs, setDocs }) => {
                                     {!isViewer && !isSupport && (
                                         !isEditing ? (
                                             <>
-                                                <Button
-                                                    onClick={handleImproveContent}
-                                                    variant="secondary"
-                                                    size="sm"
-                                                    isLoading={isImproving}
-                                                    className="text-purple-600 border-purple-200 hover:bg-purple-50 dark:bg-purple-900/10 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-900/20 h-8 px-3 text-xs"
-                                                >
-                                                    {isImproving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Wand2 className="w-3.5 h-3.5 mr-2" />}
-                                                    Melhorar com IA
-                                                </Button>
                                                 <Button size="sm" onClick={() => setIsEditing(true)} className="h-8 px-3 text-xs">
                                                     <Pencil className="w-3.5 h-3.5 mr-2" /> Editar
                                                 </Button>

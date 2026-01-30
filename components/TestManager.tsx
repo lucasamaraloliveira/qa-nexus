@@ -4,8 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { TestPlan, TestCase, Status, Priority } from '../types';
 import { Button } from './Button';
 import { Modal } from './Modal';
-import { generateTestCases } from '../services/geminiService';
-import { Plus, CheckCircle, Circle, AlertCircle, Sparkles, FolderPlus, ClipboardList, Play, Clock, Edit2, Trash2, Save, X, Copy, RotateCcw, Files, FilePlus, Bot, Search, ChevronDown, ChevronLeft, ArrowDownToLine } from 'lucide-react';
+import { Plus, CheckCircle, Circle, AlertCircle, FolderPlus, ClipboardList, Play, Clock, Edit2, Trash2, Save, X, Copy, RotateCcw, Files, FilePlus, Search, ChevronDown, ChevronLeft, ArrowDownToLine } from 'lucide-react';
 
 
 import { apiService } from '../services/apiService';
@@ -22,7 +21,6 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
   const isViewer = user?.role === 'Viewer';
   const isSupport = user?.role === 'Support';
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(plans[0]?.id || null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [users, setUsers] = useState<{ id: number, username: string }[]>([]);
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editPlanName, setEditPlanName] = useState('');
@@ -45,7 +43,6 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
   // Modals state
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isReplicateModalOpen, setIsReplicateModalOpen] = useState(false);
   const [sourcePlanId, setSourcePlanId] = useState('');
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
@@ -76,7 +73,6 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
   const [newPlanDesc, setNewPlanDesc] = useState('');
 
   const [newCaseData, setNewCaseData] = useState({ title: '', preconditions: '', steps: '', expected: '', estimatedTime: '', priority: Priority.MEDIUM, assignedTo: '' });
-  const [aiFeatureDesc, setAiFeatureDesc] = useState('');
 
   const selectedPlan = plans.find(p => p.id === selectedPlanId);
 
@@ -286,47 +282,6 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
         });
       }
     });
-  };
-
-  const handleGenerateCases = async () => {
-    if (!selectedPlanId || !aiFeatureDesc) return;
-
-    const plan = plans.find(p => p.id === selectedPlanId);
-    if (!plan) return;
-
-    setIsGenerating(true);
-    try {
-      const casesJsonString = await generateTestCases(aiFeatureDesc);
-      const cleanJson = casesJsonString.replace(/```json/g, '').replace(/```/g, '');
-      const newCasesData = JSON.parse(cleanJson);
-
-      const newCases: TestCase[] = newCasesData.map((c: any, index: number) => ({
-        id: Date.now().toString() + index,
-        title: c.title,
-        preconditions: c.preconditions,
-        steps: c.steps,
-        expectedResult: c.expectedResult,
-        status: Status.PENDING,
-        estimatedTime: '00:15' // Default estimate for AI generated cases
-      }));
-
-      const updatedPlan = { ...plan, testCases: [...plan.testCases, ...newCases] };
-      await apiService.updateTestPlan(updatedPlan);
-
-      setPlans(prev => prev.map(p => {
-        if (p.id === selectedPlanId) {
-          return updatedPlan;
-        }
-        return p;
-      }));
-      setIsAIModalOpen(false);
-      setAiFeatureDesc('');
-      showToast({ message: 'Casos de teste gerados com sucesso!', type: 'success' });
-    } catch (e) {
-      showToast({ message: "Erro ao gerar casos de teste. Verifique a API Key.", type: 'error' });
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
   const toggleCaseStatus = async (planId: string, caseId: string) => {
@@ -622,13 +577,7 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
                       >
                         <FilePlus className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => setIsAIModalOpen(true)}
-                        className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                        title="Gerar com IA"
-                      >
-                        <Bot className="w-4 h-4" />
-                      </button>
+
                     </>
                   )}
                 </div>
@@ -639,7 +588,7 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
                   <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
                     <ClipboardList className="w-16 h-16 mb-4 text-slate-200 dark:text-slate-700" />
                     <p className="text-lg font-medium text-slate-500 dark:text-slate-400">Nenhum caso de teste</p>
-                    <p className="text-sm">Crie manualmente ou use a IA para gerar casos.</p>
+                    <p className="text-sm">Crie manualmente casos de teste para o plano.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -857,38 +806,6 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
           </div>
         </div>
       </Modal>
-
-      {/* AI Generator Modal */}
-      <Modal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} title="Gerar com Inteligência Artificial">
-        <div className="space-y-4">
-          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-lg p-4 flex items-start">
-            <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400 mr-3 mt-1" />
-            <p className="text-sm text-purple-800 dark:text-purple-300">
-              Descreva a funcionalidade e a IA criará automaticamente casos de teste detalhados com passos e resultados esperados.
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição da Funcionalidade</label>
-            <textarea
-              placeholder="Ex: O sistema deve permitir upload de múltiplos arquivos PDF na tela de cadastro, limitando a 5MB por arquivo..."
-              className={`${inputClass} h-32 resize-none focus:ring-purple-500`}
-              value={aiFeatureDesc}
-              onChange={(e) => setAiFeatureDesc(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-end pt-4 space-x-3">
-            <Button variant="ghost" onClick={() => setIsAIModalOpen(false)}>Cancelar</Button>
-            <Button
-              onClick={handleGenerateCases}
-              disabled={!aiFeatureDesc}
-              className="bg-purple-600 hover:bg-purple-700 focus:ring-purple-500"
-              isLoading={isGenerating}
-            >
-              Gerar Casos
-            </Button>
-          </div>
-        </div>
-      </Modal> {/* Closing tag for AI Generator Modal */}
 
       {/* Replicate Cases Modal */}
       <Modal isOpen={isReplicateModalOpen} onClose={() => setIsReplicateModalOpen(false)} title="Importar Casos de Teste">
