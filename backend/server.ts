@@ -14,23 +14,116 @@ import uploadImageRouter from './routes/uploadImage';
 import path from 'path';
 import sitesRouter from './routes/sites';
 import logsRouter from './routes/logs';
-import changelogRouter from './routes/changelog';
-import auditRoutes from './routes/audit';
 
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
-let io: any = null;
-let server: any = app;
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*", // Allow all origins for now, or restrict to frontend URL
+        methods: ["GET", "POST"]
+    }
+});
+
+const PORT = 3001;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.set('trust proxy', true);
 
-// Register Routes
+// Socket.io Logic
+interface UserSession {
+    socketId: string;
+    userId: number;
+    username: string;
+    currentPath: string;
+    lastActivity: number;
+    status: 'Active' | 'Inactive';
+}
+
+let activeSessions: UserSession[] = [];
+
+io.on('connection', (socket) => {
+    console.log('New client connected:', socket.id);
+
+    socket.on('join', (userData: { userId: number, username: string }) => {
+        const existingSessionIndex = activeSessions.findIndex(s => s.userId === userData.userId);
+
+        const newSession: UserSession = {
+            socketId: socket.id,
+            userId: userData.userId,
+            username: userData.username,
+            currentPath: '/',
+            lastActivity: Date.now(),
+            status: 'Active'
+        };
+
+        if (existingSessionIndex !== -1) {
+            // Update existing session
+            activeSessions[existingSessionIndex] = newSession;
+        } else {
+            activeSessions.push(newSession);
+        }
+
+        io.emit('users_update', activeSessions);
+    });
+
+    socket.on('update_activity', () => {
+        const session = activeSessions.find(s => s.socketId === socket.id);
+        if (session) {
+            session.lastActivity = Date.now();
+            if (session.status === 'Inactive') {
+                session.status = 'Active';
+                io.emit('users_update', activeSessions);
+            }
+        }
+    });
+
+    socket.on('route_change', (path: string) => {
+        const session = activeSessions.find(s => s.socketId === socket.id);
+        if (session) {
+            session.currentPath = path;
+            io.emit('users_update', activeSessions);
+        }
+    });
+
+    socket.on('status_change', (status: 'Active' | 'Inactive') => {
+        const session = activeSessions.find(s => s.socketId === socket.id);
+        if (session) {
+            session.status = status;
+            io.emit('users_update', activeSessions);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        activeSessions = activeSessions.filter(s => s.socketId !== socket.id);
+        io.emit('users_update', activeSessions);
+        console.log('Client disconnected:', socket.id);
+    });
+});
+
+// Check for inactive users periodically (every 1 minute)
+// Check for inactive users periodically (every 1 minute)
+setInterval(() => {
+    const now = Date.now();
+    let changed = false;
+    activeSessions.forEach(session => {
+        if (session.status === 'Active' && (now - session.lastActivity > 5 * 60 * 1000)) { // 5 minutes inactive
+            session.status = 'Inactive';
+            changed = true;
+        }
+    });
+    if (changed) {
+        io.emit('users_update', activeSessions);
+    }
+}, 60000);
+
+import changelogRouter from './routes/changelog';
+import auditRoutes from './routes/audit';
+
 app.use('/api/versions', versionsRouter);
 app.use('/api/docs', docsRouter);
 app.use('/api/useful-docs', usefulDocsRouter);
@@ -45,131 +138,29 @@ app.use('/api/audit-logs', auditRoutes);
 app.use('/api/sites', sitesRouter);
 app.use('/api/monitoring-logs', logsRouter);
 
-// Only setup Socket.io if not on Vercel (standalone mode)
-if (process.env.VERCEL !== '1') {
-    const httpServer = createServer(app);
-    server = httpServer;
-    io = new Server(httpServer, {
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
-        }
-    });
+// Force logout endpoint
+app.post('/api/users/:username/kick', (req, res) => {
+    const { username } = req.params;
+    const sessionsToKick = activeSessions.filter(s => s.username === username);
 
-    // Socket.io Logic
-    interface UserSession {
-        socketId: string;
-        userId: number;
-        username: string;
-        currentPath: string;
-        lastActivity: number;
-        status: 'Active' | 'Inactive';
+    if (sessionsToKick.length === 0) {
+        res.status(404).json({ message: 'User not found or not online' });
+        return;
     }
 
-    let activeSessions: UserSession[] = [];
-
-    io.on('connection', (socket: any) => {
-        console.log('New client connected:', socket.id);
-
-        socket.on('join', (userData: { userId: number, username: string }) => {
-            const existingSessionIndex = activeSessions.findIndex(s => s.userId === userData.userId);
-
-            const newSession: UserSession = {
-                socketId: socket.id,
-                userId: userData.userId,
-                username: userData.username,
-                currentPath: '/',
-                lastActivity: Date.now(),
-                status: 'Active'
-            };
-
-            if (existingSessionIndex !== -1) {
-                activeSessions[existingSessionIndex] = newSession;
-            } else {
-                activeSessions.push(newSession);
-            }
-
-            io.emit('users_update', activeSessions);
-        });
-
-        socket.on('update_activity', () => {
-            const session = activeSessions.find(s => s.socketId === socket.id);
-            if (session) {
-                session.lastActivity = Date.now();
-                if (session.status === 'Inactive') {
-                    session.status = 'Active';
-                    io.emit('users_update', activeSessions);
-                }
-            }
-        });
-
-        socket.on('route_change', (path: string) => {
-            const session = activeSessions.find(s => s.socketId === socket.id);
-            if (session) {
-                session.currentPath = path;
-                io.emit('users_update', activeSessions);
-            }
-        });
-
-        socket.on('status_change', (status: 'Active' | 'Inactive') => {
-            const session = activeSessions.find(s => s.socketId === socket.id);
-            if (session) {
-                session.status = status;
-                io.emit('users_update', activeSessions);
-            }
-        });
-
-        socket.on('disconnect', () => {
-            activeSessions = activeSessions.filter(s => s.socketId !== socket.id);
-            io.emit('users_update', activeSessions);
-            console.log('Client disconnected:', socket.id);
-        });
-    });
-
-    // Check for inactive users periodically
-    setInterval(() => {
-        const now = Date.now();
-        let changed = false;
-        activeSessions.forEach(session => {
-            if (session.status === 'Active' && (now - session.lastActivity > 5 * 60 * 1000)) {
-                session.status = 'Inactive';
-                changed = true;
-            }
-        });
-        if (changed) {
-            io.emit('users_update', activeSessions);
+    sessionsToKick.forEach(session => {
+        const socket = io.sockets.sockets.get(session.socketId);
+        if (socket) {
+            socket.disconnect(true);
         }
-    }, 60000);
-
-    // Force logout endpoint with Socket.io integration
-    app.post('/api/users/:username/kick', (req, res) => {
-        const { username } = req.params;
-        const sessionsToKick = activeSessions.filter(s => s.username === username);
-
-        if (sessionsToKick.length === 0) {
-            res.status(404).json({ message: 'User not found or not online' });
-            return;
-        }
-
-        sessionsToKick.forEach(session => {
-            const socket = io.sockets.sockets.get(session.socketId);
-            if (socket) {
-                socket.disconnect(true);
-            }
-        });
-
-        activeSessions = activeSessions.filter(s => s.username !== username);
-        io.emit('users_update', activeSessions);
-
-        res.json({ message: `User ${username} has been kicked.` });
     });
-} else {
-    // Fallback for kick endpoint on Vercel
-    app.post('/api/users/:username/kick', (req, res) => {
-        res.status(501).json({ message: 'Kick functionality is not available in serverless mode.' });
-    });
-}
 
+    // Remove from active sessions
+    activeSessions = activeSessions.filter(s => s.username !== username);
+    io.emit('users_update', activeSessions);
+
+    res.json({ message: `User ${username} has been kicked.` });
+});
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Export app for serverless use
@@ -178,7 +169,7 @@ export { app };
 // Only listen if this file is run directly (not as a module/serverless function)
 if (require.main === module) {
     initializeDatabase().then(() => {
-        server.listen(PORT, () => {
+        httpServer.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
         });
     }).catch(err => {
