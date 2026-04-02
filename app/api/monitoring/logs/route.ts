@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/backend/database';
-import { initializeFirebase } from '@/lib/backend/firebase-admin';
+import { initializeFirebase } from '@/lib/backend/firebase';
 
 export async function GET() {
     try {
