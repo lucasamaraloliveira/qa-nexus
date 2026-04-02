@@ -2,14 +2,14 @@
   "name": "qa-nexus",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev:frontend": "next dev",
-    "dev:backend": "cd backend && npm start",
+    "dev:backend": "tsx watch backend/server.ts",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "postinstall": "prisma generate --schema=backend/prisma/schema.prisma"
+    "lint": "eslint"
   },
   "dependencies": {
     "@prisma/client": "^6.3.0",
@@ -19,6 +19,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "firebase": "^12.11.0",
+    "firebase-admin": "^13.7.0",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
@@ -46,7 +47,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/jszip": "^3.4.0",
     "@types/multer": "^2.0.0",
-    "@types/node": "^20",
+    "@types/node": "^25.5.0",
     "@types/prismjs": "^1.26.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -55,6 +56,8 @@
     "eslint-config-next": "16.1.4",
     "prisma": "^6.3.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

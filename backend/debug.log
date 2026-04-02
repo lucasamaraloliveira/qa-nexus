@@ -1,9 +1,0 @@
-toggleGlobalLogging called with: true
-DB keys: config,db
-DB run successful
-toggleGlobalLogging called with: false
-DB keys: _originalClient,_middlewares,_createPrismaPromise,$extends,_extensions,_previewFeatures,_clientVersion,_activeProvider,_globalOmit,_tracingHelper,_errorFormat,_runtimeDataModel,_engineConfig,_accelerateEngineConfig,_engine,_requestHandler,_metrics,_appliedParent,version,script,buildDoc,usefulDoc,manual,testPlan,testCase,user,changelogSystem,changelogEntry,changelogItem,auditLog,systemSetting,site,monitoringLog,$parent
-DB run successful
-toggleGlobalLogging called with: true
-DB keys: _originalClient,_middlewares,_createPrismaPromise,$extends,_extensions,_previewFeatures,_clientVersion,_activeProvider,_globalOmit,_tracingHelper,_errorFormat,_runtimeDataModel,_engineConfig,_accelerateEngineConfig,_engine,_requestHandler,_metrics,_appliedParent,version,script,buildDoc,usefulDoc,manual,testPlan,testCase,user,changelogSystem,changelogEntry,changelogItem,auditLog,systemSetting,site,monitoringLog,$parent
-DB run successful

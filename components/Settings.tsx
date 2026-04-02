@@ -90,7 +90,9 @@ export const Settings: React.FC = () => {
     const fetchUsers = async () => {
         try {
             const data = await apiService.getUsers();
-            setUsers(data);
+            // Remove duplicates by ID to prevent React key clashing
+            const uniqueUsers = Array.from(new Map(data.map(u => [u.id, u])).values());
+            setUsers(uniqueUsers);
         } catch (error) {
             console.error('Failed to fetch users', error);
         }
