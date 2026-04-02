@@ -112,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const googleLogin = async () => {
         try {
+            if (!auth) throw new Error('Firebase Auth not initialized');
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             const idToken = await result.user.getIdToken();
