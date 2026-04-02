@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiService } from '../services/apiService';
+import { auth } from '../lib/firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 import { User } from '../types';
 
@@ -10,6 +11,7 @@ interface AuthContextType {
     profilePicture: string | null;
     token: string | null;
     login: (token: string, username: string, role: string, id: number) => void;
+    googleLogin: () => Promise<void>;
     logout: () => void;
     updateUser: (username: string, profilePicture: string | null) => void;
     isSessionExpired: boolean;
@@ -108,6 +110,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(true);
     };
 
+    const googleLogin = async () => {
+        try {
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken();
+
+            // Send to backend for verification and user sync
+            const response = await fetch('/api/auth/google', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken })
+            });
+
+            if (!response.ok) throw new Error('Backend authentication failed');
+
+            const data = await response.json();
+            login(data.token, data.username, data.role, data.id);
+            if (data.profilePicture) setProfilePicture(data.profilePicture);
+        } catch (error) {
+            console.error('Google Login Error:', error);
+            throw error;
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         setToken(null);
@@ -131,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, profilePicture, token, login, logout, updateUser, isSessionExpired }}>
+        <AuthContext.Provider value={{ isAuthenticated, user, profilePicture, token, login, googleLogin, logout, updateUser, isSessionExpired }}>
             {children}
         </AuthContext.Provider>
     );

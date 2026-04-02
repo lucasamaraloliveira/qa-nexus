@@ -1,7 +1,11 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+
 import express from 'express';
 import cors from 'cors';
 import { initializeDatabase } from './database';
+import { initializeFirebase } from './firebase';
 import versionsRouter from './routes/versions';
 import docsRouter from './routes/docs';
 import usefulDocsRouter from './routes/usefulDocs';
@@ -11,7 +15,6 @@ import authRouter from './routes/auth';
 import usersRouter from './routes/users';
 import uploadRouter from './routes/upload';
 import uploadImageRouter from './routes/uploadImage';
-import path from 'path';
 import sitesRouter from './routes/sites';
 import logsRouter from './routes/logs';
 
@@ -168,12 +171,15 @@ export { app };
 
 // Only listen if this file is run directly (not as a module/serverless function)
 if (require.main === module) {
-    initializeDatabase().then(() => {
+    Promise.all([
+        initializeDatabase(),
+        Promise.resolve(initializeFirebase())
+    ]).then(() => {
         httpServer.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
         });
     }).catch(err => {
-        console.error('Failed to initialize database:', err);
+        console.error('Failed to initialize application databases:', err);
     });
 }
 
