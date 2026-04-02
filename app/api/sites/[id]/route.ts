@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/backend/database';
 import { initializeFirebase } from '@/lib/backend/firebase';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         initializeFirebase();
-        const { id } = params;
+        const { id } = await params;
         const { name, url } = await req.json();
         const db = getDb();
         await db.site.update({
@@ -19,10 +19,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         initializeFirebase();
-        const { id } = params;
+        const { id } = await params;
         const db = getDb();
         await db.site.delete({
             where: { id }

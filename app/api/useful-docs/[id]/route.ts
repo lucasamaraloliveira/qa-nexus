@@ -4,13 +4,13 @@ import { initializeFirebase } from '@/lib/backend/firebase';
 import { authenticate } from '@/lib/auth-server';
 import { AuditService } from '@/lib/backend/services/auditService';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         initializeFirebase();
         const userPayload = authenticate(req);
         if (!userPayload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        const { id } = params;
+        const { id } = await params;
         const data = await req.json();
         const db = getDb();
         
@@ -27,13 +27,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         initializeFirebase();
         const userPayload = authenticate(req);
         if (!userPayload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        const { id } = params;
+        const { id } = await params;
         const db = getDb();
         
         await db.usefulDoc.delete({

@@ -5,7 +5,7 @@ import { authenticate } from '@/lib/auth-server';
 import { AuditService } from '@/lib/backend/services/auditService';
 import bcrypt from 'bcryptjs';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         initializeFirebase();
         const userPayload = authenticate(req);
@@ -13,7 +13,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        const { id } = params;
+        const { id } = await params;
         const { username, password, role } = await req.json();
 
         const db = getDb();
@@ -36,7 +36,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         initializeFirebase();
         const userPayload = authenticate(req);
@@ -44,7 +44,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        const { id } = params;
+        const { id } = await params;
         const db = getDb();
         
         // Don't allow deleting root by ID (additional check)
