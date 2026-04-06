@@ -14,8 +14,6 @@ import mammoth from 'mammoth';
 
 export const Manuals: React.FC = () => {
     const [manuals, setManuals] = useState<Manual[]>([]);
-    const [isUploading, setIsUploading] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [breadcrumbs, setBreadcrumbs] = useState<{ id: string | null, name: string }[]>([{ id: null, name: 'Início' }]);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -95,78 +93,6 @@ export const Manuals: React.FC = () => {
         }
     };
 
-    const uploadFiles = async (files: FileList | File[]) => {
-        setIsUploading(true);
-        let successCount = 0;
-        let errorCount = 0;
-
-        try {
-            const fileArray = Array.from(files);
-            for (const file of fileArray) {
-                try {
-                    await apiService.uploadManual(file, currentFolderId);
-                    successCount++;
-                } catch (error) {
-                    console.error('Upload error:', error);
-                    errorCount++;
-                }
-            }
-
-            await loadManuals(currentFolderId);
-
-            if (successCount > 0 && errorCount === 0) {
-                showToast({ message: `${successCount} arquivo(s) enviado(s) com sucesso!`, type: 'success' });
-            } else if (successCount > 0 && errorCount > 0) {
-                showToast({ message: `${successCount} enviado(s), ${errorCount} falha(s).`, type: 'warning' });
-            } else if (errorCount > 0) {
-                showToast({ message: 'Falha no upload dos arquivos.', type: 'error' });
-            }
-
-        } catch (error: any) {
-            console.error('Upload error:', error);
-            showToast({ message: `Erro ao fazer upload: ${error.message || 'Erro desconhecido'}`, type: 'error' });
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (!files || files.length === 0) return;
-        await uploadFiles(files);
-        event.target.value = '';
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        if (isViewer || isSupport) return;
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
-    const handleDrop = async (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        if (isViewer || isSupport) return;
-
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            // Currently only supporting single file upload per drag, or we can loop
-            // Let's loop to support multiple if the backend supports sequential uploads or just take the first one
-            // The requirement didn't specify multiple, but "arrastando-o" implies singular or plural.
-            // Let's just upload the first one for now to match existing single upload behavior, 
-            // or loop if we want to be fancy. The existing handleFileUpload only takes one [0].
-            // Let's stick to single file for consistency with the input, or loop if we want to be better.
-            // Given the input only takes one file (no 'multiple' attr on input), I'll stick to one file for safety,
-            // but I'll implement a loop just in case the user drops multiple, it's better UX.
-
-            await uploadFiles(files);
-        }
-    };
 
     const handleCreateFolder = async () => {
         if (!newFolderName) return;
@@ -231,14 +157,6 @@ export const Manuals: React.FC = () => {
         });
     };
 
-    const handleDownload = (path: string, originalName: string) => {
-        const link = document.createElement('a');
-        link.href = `/api/uploads/${path}`;
-        link.download = originalName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
 
     const handlePreview = (path: string, type: string, name: string, url?: string) => {
         const isExternal = !!url && url.startsWith('http');
@@ -276,16 +194,15 @@ export const Manuals: React.FC = () => {
         setIsCollapsed(false);
     };
 
-    const handleShare = async (path: string) => {
-        const url = `${window.location.origin}/api/uploads/${path}`;
+    const handleShare = async (path: string, externalUrl?: string) => {
+        const urlToCopy = externalUrl || `${window.location.origin}/api/uploads/${path}`;
         try {
-            await navigator.clipboard.writeText(url);
+            await navigator.clipboard.writeText(urlToCopy);
             showToast({ message: 'Link copiado para a área de transferência!', type: 'success' });
         } catch (err) {
             console.error('Failed to copy:', err);
-            // Fallback for older browsers or non-secure contexts
             const textArea = document.createElement("textarea");
-            textArea.value = url;
+            textArea.value = urlToCopy;
             document.body.appendChild(textArea);
             textArea.select();
             try {
@@ -365,28 +282,10 @@ export const Manuals: React.FC = () => {
                                 <FolderPlus className="w-4 h-4 mr-2" />
                                 Nova Pasta
                             </Button>
-                            <Button onClick={() => setIsNewLinkModalOpen(true)} variant="secondary" className="flex-1 md:flex-none justify-center">
+                            <Button onClick={() => setIsNewLinkModalOpen(true)} className="flex-1 md:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white border-0">
                                 <LinkIcon className="w-4 h-4 mr-2" />
                                 Novo Link
                             </Button>
-                            <div className="relative flex-1 md:flex-none">
-                                <input
-                                    type="file"
-                                    id="file-upload"
-                                    className="hidden"
-                                    onChange={handleFileUpload}
-                                    disabled={isUploading}
-                                    multiple
-                                    accept=".doc,.docx,.pdf,.xls,.xlsx,.jpg,.png"
-                                />
-                                <label
-                                    htmlFor="file-upload"
-                                    className={`flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                    <Upload className="w-4 h-4 mr-2" />
-                                    {isUploading ? 'Enviando...' : 'Upload'}
-                                </label>
-                            </div>
                         </>
                     )}
                 </div>
@@ -414,20 +313,7 @@ export const Manuals: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`relative min-h-[300px] rounded-xl transition-all ${isDragging ? 'border-2 border-dashed border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
-            >
-                {isDragging && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-xl">
-                        <div className="text-center animate-bounce">
-                            <Upload className="w-12 h-12 text-indigo-600 mx-auto mb-2" />
-                            <p className="text-lg font-bold text-indigo-600">Solte o arquivo aqui para enviar</p>
-                        </div>
-                    </div>
-                )}
+            <div className="relative min-h-[300px] rounded-xl transition-all">
 
                 {manuals.length > 0 ? (
                     viewMode === 'grid' ? (
@@ -468,18 +354,11 @@ export const Manuals: React.FC = () => {
                                                 {!isViewer && (
                                                     <>
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); handleShare(manual.path); }}
+                                                            onClick={(e) => { e.stopPropagation(); handleShare(manual.path, manual.url); }}
                                                             className="p-1.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 shadow-sm rounded-md border border-slate-200 dark:border-slate-700"
                                                             title="Compartilhar"
                                                         >
                                                             <Share2 className="w-3 h-3" />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleDownload(manual.path, manual.originalName); }}
-                                                            className="p-1.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-green-600 shadow-sm rounded-md border border-slate-200 dark:border-slate-700"
-                                                            title="Baixar"
-                                                        >
-                                                            <Download className="w-3 h-3" />
                                                         </button>
                                                     </>
                                                 )}
@@ -545,18 +424,11 @@ export const Manuals: React.FC = () => {
                                                             {!isViewer && (
                                                                 <>
                                                                     <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleShare(manual.path); }}
+                                                                        onClick={(e) => { e.stopPropagation(); handleShare(manual.path, manual.url); }}
                                                                         className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700"
                                                                         title="Compartilhar"
                                                                     >
                                                                         <Share2 className="w-4 h-4" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleDownload(manual.path, manual.originalName); }}
-                                                                        className="p-1.5 text-slate-400 hover:text-green-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700"
-                                                                        title="Baixar"
-                                                                    >
-                                                                        <Download className="w-4 h-4" />
                                                                     </button>
                                                                 </>
                                                             )}
@@ -615,12 +487,6 @@ export const Manuals: React.FC = () => {
                                 <FileText className="w-20 h-20 text-slate-400 mx-auto mb-4" />
                                 <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">Visualização não disponível</p>
                                 <p className="text-slate-500 mb-6">Este tipo de arquivo não pode ser visualizado aqui.</p>
-                                {!isViewer && previewFile && previewFile.path && !previewFile.path.startsWith('http') && (
-                                    <Button onClick={() => previewFile.path && handleDownload(previewFile.path, previewFile.name)}>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Baixar Arquivo
-                                    </Button>
-                                )}
                                 {previewFile?.path?.startsWith('http') && (
                                     <Button onClick={() => previewFile.path && window.open(previewFile.path, '_blank')}>
                                         <Eye className="w-4 h-4 mr-2" />
