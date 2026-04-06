@@ -10,7 +10,6 @@ interface AuthContextType {
     user: User | null;
     profilePicture: string | null;
     token: string | null;
-    googleAccessToken: string | null;
     login: (token: string, username: string, role: string, id: string) => void;
     googleLogin: () => Promise<void>;
     logout: () => void;
@@ -25,15 +24,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
-    const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const [isSessionExpired, setIsSessionExpired] = useState(false);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
-        const storedGoogleToken = localStorage.getItem('googleAccessToken');
-        if (storedGoogleToken) setGoogleAccessToken(storedGoogleToken);
         
         if (storedToken) {
             setToken(storedToken);
@@ -109,18 +105,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             if (!auth) throw new Error('Firebase Auth not initialized');
             const provider = new GoogleAuthProvider();
-            // Solicita permissão para ler o Drive
-            provider.addScope('https://www.googleapis.com/auth/drive.readonly');
             
             const result = await signInWithPopup(auth, provider);
             const idToken = await result.user.getIdToken();
-            const credential = GoogleAuthProvider.credentialFromResult(result);
-            const accessToken = credential?.accessToken || null;
-
-            if (accessToken) {
-                setGoogleAccessToken(accessToken);
-                localStorage.setItem('googleAccessToken', accessToken);
-            }
 
             const response = await fetch('/api/auth/google', {
                 method: 'POST',
@@ -151,9 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Error signing out from Firebase:', error);
         } finally {
             localStorage.removeItem('token');
-            localStorage.removeItem('googleAccessToken');
             setToken(null);
-            setGoogleAccessToken(null);
             setUser(null);
             setProfilePicture(null);
             setIsAuthenticated(false);
@@ -175,7 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, profilePicture, token, googleAccessToken, login, googleLogin, logout, updateUser, isSessionExpired }}>
+        <AuthContext.Provider value={{ isAuthenticated, user, profilePicture, token, login, googleLogin, logout, updateUser, isSessionExpired }}>
             {children}
         </AuthContext.Provider>
     );
