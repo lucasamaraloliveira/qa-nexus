@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext';
 
 interface UserSession {
     socketId: string;
-    userId: number;
+    userId: string;
     username: string;
     currentPath: string;
     lastActivity: number;

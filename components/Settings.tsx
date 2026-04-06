@@ -24,8 +24,8 @@ export const Settings: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     // User Management State (Admin)
-    const [users, setUsers] = useState<{ id: number, username: string, role: string }[]>([]);
-    const [editingUser, setEditingUser] = useState<{ id: number, username: string, role: string } | null>(null);
+    const [users, setUsers] = useState<{ id: string, username: string, role: string }[]>([]);
+    const [editingUser, setEditingUser] = useState<{ id: string, username: string, role: string } | null>(null);
     const [editUsername, setEditUsername] = useState('');
     const [editPassword, setEditPassword] = useState('');
     const [editRole, setEditRole] = useState('Tester');
@@ -98,7 +98,7 @@ export const Settings: React.FC = () => {
         }
     };
 
-    const handleDeleteUser = async (id: number, username: string) => {
+    const handleDeleteUser = async (id: string, username: string) => {
         if (username === 'root') {
             setMessage({ type: 'error', text: 'Não é possível excluir o usuário root.' });
             return;
@@ -114,7 +114,7 @@ export const Settings: React.FC = () => {
         }
     };
 
-    const handleEditUser = (user: { id: number, username: string, role: string }) => {
+    const handleEditUser = (user: { id: string, username: string, role: string }) => {
         setEditingUser(user);
         setEditUsername(user.username);
         setEditRole(user.role || 'Tester');

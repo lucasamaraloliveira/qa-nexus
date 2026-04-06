@@ -234,7 +234,7 @@ export const apiService = {
     },
 
     // Users
-    async getUsers(): Promise<{ id: number, username: string, role: string }[]> {
+    async getUsers(): Promise<{ id: string, username: string, role: string }[]> {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/users`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -244,7 +244,7 @@ export const apiService = {
     },
 
     // Admin
-    async deleteUser(id: number): Promise<void> {
+    async deleteUser(id: string): Promise<void> {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/users/${id}`, {
             method: 'DELETE',
@@ -253,7 +253,7 @@ export const apiService = {
         if (!response.ok) throw new Error('Failed to delete user');
     },
 
-    async updateUserAdmin(id: number, data: { username?: string, password?: string, role?: string }): Promise<void> {
+    async updateUserAdmin(id: string, data: { username?: string, password?: string, role?: string }): Promise<void> {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/users/${id}`, {
             method: 'PUT',
@@ -267,7 +267,7 @@ export const apiService = {
     },
 
     // Auth
-    async login(username: string, password: string): Promise<{ token: string, username: string, role: string, id: number }> {
+    async login(username: string, password: string): Promise<{ token: string, username: string, role: string, id: string }> {
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

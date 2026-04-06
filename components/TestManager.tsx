@@ -21,7 +21,7 @@ export const TestManager: React.FC<TestManagerProps> = ({ plans, setPlans }) => 
   const isViewer = user?.role === 'Viewer';
   const isSupport = user?.role === 'Support';
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(plans[0]?.id || null);
-  const [users, setUsers] = useState<{ id: number, username: string }[]>([]);
+  const [users, setUsers] = useState<{ id: string, username: string }[]>([]);
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editPlanName, setEditPlanName] = useState('');
   const [editPlanDesc, setEditPlanDesc] = useState('');
