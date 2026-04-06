@@ -13,22 +13,24 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only if the API key is present
-let app: FirebaseApp | undefined;
-let auth: Auth | undefined;
-let db: Firestore | undefined;
-let storage: FirebaseStorage | undefined;
-
-if (typeof window !== 'undefined' || process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-    try {
-        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-        auth = getAuth(app);
-        db = getFirestore(app);
-        storage = getStorage(app);
-    } catch (error) {
-        console.error("Firebase initialization error:", error);
+function getFirebaseApp(): FirebaseApp {
+    if (getApps().length) {
+        return getApp();
     }
+    
+    if (!firebaseConfig.apiKey) {
+        // Log crítico visível na Vercel e no Navegador
+        const errorMsg = "CRITICAL: Firebase API Key is missing! Check Vercel Dashboard/Environment Variables.";
+        console.error(errorMsg);
+        // Não lançamos erro aqui para não quebrar o build, mas os serviços não funcionarão
+    }
+    
+    return initializeApp(firebaseConfig);
 }
 
-export { app, auth, db, storage };
+const app = getFirebaseApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
+export { app, auth, db, storage, firebaseConfig };
