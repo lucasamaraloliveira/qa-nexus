@@ -10,6 +10,7 @@ interface AuthContextType {
     user: User | null;
     profilePicture: string | null;
     token: string | null;
+    googleAccessToken: string | null;
     login: (token: string, username: string, role: string, id: string) => void;
     googleLogin: () => Promise<void>;
     logout: () => void;
@@ -24,9 +25,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const [isSessionExpired, setIsSessionExpired] = useState(false);
+
+    useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        const storedGoogleToken = localStorage.getItem('googleAccessToken');
+        if (storedGoogleToken) setGoogleAccessToken(storedGoogleToken);
+        
+        if (storedToken) {
+            setToken(storedToken);
+            fetch('/api/users/me', {
+                headers: {
+                    'Authorization': `Bearer ${storedToken}`
+                }
+            })
+                .then(res => {
+                    if (res.ok) return res.json();
+                    throw new Error('Failed to fetch user');
+                })
+                .then(data => {
+                    setUser({ id: String(data.id), username: data.username, role: data.role });
+                    if (data.profilePicture) {
+                        setProfilePicture(data.profilePicture);
+                    }
+                    setIsAuthenticated(true);
+                })
+                .catch(err => {
+                    console.error('Failed to fetch user details', err);
+                    logout();
+                })
+                .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
@@ -62,51 +97,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, [isAuthenticated, isSessionExpired]);
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-
-        if (storedToken) {
-            setToken(storedToken);
-
-            // Fetch user details to get ID and profile picture
-            fetch('/api/users/me', {
-                headers: {
-                    'Authorization': `Bearer ${storedToken}`
-                }
-            })
-                .then(res => {
-                    if (res.ok) return res.json();
-                    throw new Error('Failed to fetch user');
-                })
-                .then(data => {
-                    setUser({ id: String(data.id), username: data.username, role: data.role });
-                    if (data.profilePicture) {
-                        setProfilePicture(data.profilePicture);
-                    }
-                    setIsAuthenticated(true);
-                })
-                .catch(err => {
-                    console.error('Failed to fetch user details', err);
-                    // If fetching user fails (e.g. invalid token), logout
-                    logout();
-                })
-                .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
-        }
-    }, []);
-
     const login = (newToken: string, newUsername: string, role: string, id: string) => {
         localStorage.setItem('token', newToken);
         setToken(newToken);
-        setIsSessionExpired(false); // Reset expiry on login
-
-        // Set user with role
-        setUser({
-            id,
-            username: newUsername,
-            role: role as any
-        });
+        setIsSessionExpired(false);
+        setUser({ id, username: newUsername, role: role as any });
         setIsAuthenticated(true);
     };
 
@@ -114,10 +109,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             if (!auth) throw new Error('Firebase Auth not initialized');
             const provider = new GoogleAuthProvider();
+            // Solicita permissão para ler o Drive
+            provider.addScope('https://www.googleapis.com/auth/drive.readonly');
+            
             const result = await signInWithPopup(auth, provider);
             const idToken = await result.user.getIdToken();
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const accessToken = credential?.accessToken || null;
 
-            // Send to backend for verification and user sync
+            if (accessToken) {
+                setGoogleAccessToken(accessToken);
+                localStorage.setItem('googleAccessToken', accessToken);
+            }
+
             const response = await fetch('/api/auth/google', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -126,7 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                console.error('Backend Authentication Detail:', errorData);
                 throw new Error(errorData.error || 'Backend authentication failed');
             }
 
@@ -148,7 +151,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Error signing out from Firebase:', error);
         } finally {
             localStorage.removeItem('token');
+            localStorage.removeItem('googleAccessToken');
             setToken(null);
+            setGoogleAccessToken(null);
             setUser(null);
             setProfilePicture(null);
             setIsAuthenticated(false);
@@ -170,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, profilePicture, token, login, googleLogin, logout, updateUser, isSessionExpired }}>
+        <AuthContext.Provider value={{ isAuthenticated, user, profilePicture, token, googleAccessToken, login, googleLogin, logout, updateUser, isSessionExpired }}>
             {children}
         </AuthContext.Provider>
     );

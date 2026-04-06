@@ -40,13 +40,50 @@ export const Manuals: React.FC = () => {
 
     const { setIsCollapsed } = useLayout();
     const { showToast } = useToast();
-    const { user } = useAuth();
+    const { user, googleAccessToken } = useAuth();
     const isViewer = user?.role === 'Viewer';
     const isSupport = user?.role === 'Support';
 
     useEffect(() => {
         loadManuals(currentFolderId);
     }, [currentFolderId]);
+
+    // Google Picker Logic
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = "https://apis.google.com/js/api.js";
+        script.onload = () => {
+            (window as any).gapi.load('picker', { 'callback': () => console.log('Google Picker loaded') });
+        };
+        document.body.appendChild(script);
+        return () => { document.body.removeChild(script); };
+    }, []);
+
+    const handleGoogleDrivePicker = () => {
+        if (!googleAccessToken) {
+            showToast({ message: "Faça login com Google para usar esta função", type: "warning" });
+            return;
+        }
+
+        const picker = new (window as any).google.picker.PickerBuilder()
+            .addView((window as any).google.picker.ViewId.DOCS)
+            .setOAuthToken(googleAccessToken)
+            .setDeveloperKey(process.env.NEXT_PUBLIC_FIREBASE_API_KEY) // O Picker também usa a chave da API
+            .setCallback(async (data: any) => {
+                if (data.action === (window as any).google.picker.Action.PICKED) {
+                    const doc = data.docs[0];
+                    try {
+                        await apiService.createLink(doc.name, doc.url, currentFolderId);
+                        await loadManuals(currentFolderId);
+                        showToast({ message: `${doc.name} importado do Drive!`, type: "success" });
+                    } catch (error) {
+                        showToast({ message: "Erro ao importar do Drive", type: "error" });
+                    }
+                }
+            })
+            .build();
+        picker.setVisible(true);
+    };
 
     useEffect(() => {
         if (previewFile) {
@@ -346,6 +383,10 @@ export const Manuals: React.FC = () => {
                             <Button onClick={() => setIsNewLinkModalOpen(true)} variant="secondary" className="flex-1 md:flex-none justify-center">
                                 <LinkIcon className="w-4 h-4 mr-2" />
                                 Novo Link
+                            </Button>
+                            <Button onClick={handleGoogleDrivePicker} variant="secondary" className="flex-1 md:flex-none justify-center border-indigo-200 dark:border-indigo-800">
+                                <Share2 className="w-4 h-4 mr-2 text-indigo-500" />
+                                Google Drive
                             </Button>
                             <div className="relative flex-1 md:flex-none">
                                 <input
