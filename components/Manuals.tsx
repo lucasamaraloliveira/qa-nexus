@@ -252,9 +252,9 @@ export const Manuals: React.FC = () => {
         
         // Se for link externo de arquivo ou drive, usamos a URL como path
         setPreviewFile({ 
-            path: isExternal ? url : path, 
-            type: type, 
-            name: name 
+            path: isExternal ? (url || "") : (path || ""), 
+            type: type || "file", 
+            name: name || "Arquivo"
         });
         setIsCollapsed(true);
     };
@@ -598,15 +598,15 @@ export const Manuals: React.FC = () => {
                             </div>
                         ) : previewContent ? (
                             <div className="w-full h-full bg-white dark:bg-slate-900 p-8 overflow-auto shadow-sm rounded-lg prose dark:prose-invert max-w-none [&>table]:w-full [&>table]:border-collapse [&>table]:border [&>table]:border-slate-200 dark:[&>table]:border-slate-700 [&>table_td]:border [&>table_td]:border-slate-200 dark:[&>table_td]:border-slate-700 [&>table_td]:p-2 [&>table_th]:border [&>table_th]:border-slate-200 dark:[&>table_th]:border-slate-700 [&>table_th]:p-2 [&>table_th]:bg-slate-50 dark:[&>table_th]:bg-slate-800" dangerouslySetInnerHTML={{ __html: previewContent }} />
-                        ) : (previewFile?.type.includes('image') || /\.(jpg|jpeg|png|gif)$/i.test(previewFile?.path || '')) ? (
+                        ) : (previewFile?.type?.includes('image') || (previewFile?.path && /\.(jpg|jpeg|png|gif)$/i.test(previewFile.path))) ? (
                             <img
-                                src={previewFile?.path.startsWith('http') ? previewFile.path : `/api/uploads/${previewFile?.path}`}
+                                src={previewFile?.path?.startsWith('http') ? previewFile.path : `/api/uploads/${previewFile?.path}`}
                                 alt={previewFile?.name}
                                 className="max-w-full max-h-full object-contain shadow-lg rounded-lg"
                             />
-                        ) : (previewFile?.type.includes('pdf') || previewFile?.path.includes('.pdf') || previewFile?.path.includes('drive.google.com') || previewFile?.path.includes('docs.google.com')) ? (
+                        ) : (previewFile?.type?.includes('pdf') || previewFile?.path?.includes('.pdf') || previewFile?.path?.includes('drive.google.com') || previewFile?.path?.includes('docs.google.com')) ? (
                             <iframe
-                                src={previewFile?.path.startsWith('http') ? getEmbedUrl(previewFile.path) : `/api/uploads/${previewFile?.path}`}
+                                src={previewFile?.path?.startsWith('http') ? getEmbedUrl(previewFile.path) : `/api/uploads/${previewFile?.path}`}
                                 className="w-full h-full rounded-lg shadow-sm bg-white"
                                 title="File Preview"
                             />
@@ -615,14 +615,14 @@ export const Manuals: React.FC = () => {
                                 <FileText className="w-20 h-20 text-slate-400 mx-auto mb-4" />
                                 <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">Visualização não disponível</p>
                                 <p className="text-slate-500 mb-6">Este tipo de arquivo não pode ser visualizado aqui.</p>
-                                {!isViewer && previewFile && !previewFile.path.startsWith('http') && (
-                                    <Button onClick={() => handleDownload(previewFile.path, previewFile.name)}>
+                                {!isViewer && previewFile && previewFile.path && !previewFile.path.startsWith('http') && (
+                                    <Button onClick={() => previewFile.path && handleDownload(previewFile.path, previewFile.name)}>
                                         <Download className="w-4 h-4 mr-2" />
                                         Baixar Arquivo
                                     </Button>
                                 )}
-                                {previewFile?.path.startsWith('http') && (
-                                    <Button onClick={() => window.open(previewFile.path, '_blank')}>
+                                {previewFile?.path?.startsWith('http') && (
+                                    <Button onClick={() => previewFile.path && window.open(previewFile.path, '_blank')}>
                                         <Eye className="w-4 h-4 mr-2" />
                                         Abrir no Navegador
                                     </Button>
