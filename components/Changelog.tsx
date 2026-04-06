@@ -12,6 +12,37 @@ interface ChangelogProps {
 export const Changelog: React.FC<ChangelogProps> = ({ onClose, version }) => {
     const changes = [
         {
+            version: '3.2',
+            date: '06 de Abril, 2026',
+            type: 'minor',
+            features: [
+                {
+                    title: 'Transição para QA Nexus',
+                    description: 'O aplicativo foi renomeado e reposicionado como QA Nexus, com uma nova identidade visual moderna e profissional.',
+                    icon: LayoutIcon,
+                    color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                },
+                {
+                    title: 'Progressive Web App (PWA)',
+                    description: 'O QA Nexus agora pode ser instalado como um aplicativo nativo no seu Desktop ou Celular, com suporte a cache e carregamento instantâneo.',
+                    icon: Smartphone,
+                    color: 'text-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                },
+                {
+                    title: 'Simplificação de Manuais',
+                    description: 'Otimização do workflow de manuais com foco em links externos e organização por pastas, simplificando a gestão de documentos.',
+                    icon: Wrench,
+                    color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                },
+                {
+                    title: 'Correção de UI e Temas',
+                    description: 'Melhorias significativas na consistência do Dark Mode e na acessibilidade de modais em resoluções desktop.',
+                    icon: Sparkles,
+                    color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                }
+            ]
+        },
+        {
             version: '3.1.2',
             date: '03 de Dezembro, 2025',
             type: 'patch',

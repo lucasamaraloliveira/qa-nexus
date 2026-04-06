@@ -30,7 +30,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 
   React.useEffect(() => {
     const lastSeenVersion = localStorage.getItem('lastSeenVersion');
-    if (lastSeenVersion !== '3.1.2') {
+    if (lastSeenVersion !== '3.2') {
       setHasUnreadNews(true);
     }
   }, []);
@@ -123,7 +123,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                 Sistema Online
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 pl-4">
-                v3.1.2
+                v3.2
               </div>
             </div>
           )}
@@ -204,13 +204,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                   {/* Changelog Button */}
                   <button
                     onClick={() => {
-                      setActiveTab('changelog');
-                      const savedVersion = localStorage.getItem('app_version');
-                      if (savedVersion !== '3.1.2') {
-                        localStorage.removeItem('changelog_seen');
-                        localStorage.setItem('app_version', '3.1.2');
-                        setShowChangelog(true);
-                      }
+                      localStorage.setItem('app_version', '3.2');
+                      localStorage.setItem('lastSeenVersion', '3.2');
+                      setShowChangelog(true);
                       setHasUnreadNews(false);
                     }}
                     className={`p-2.5 rounded-xl transition-all duration-200 relative ${activeTab === 'changelog' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/50 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
@@ -259,7 +255,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
               className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            {showChangelog && <Changelog onClose={() => setShowChangelog(false)} version="3.1.2" />}
+            {showChangelog && <Changelog onClose={() => setShowChangelog(false)} version="3.2" />}
 
             {/* Drawer */}
             <div className={`fixed top-0 left-0 h-full w-72 bg-white/90 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl z-50 transform transition-transform duration-300 ease-out md:hidden flex flex-col border-r border-white/20 dark:border-slate-800/50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -358,9 +354,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                   {/* Changelog */}
                   <button
                     onClick={() => {
-                      setActiveTab('changelog');
-                      localStorage.setItem('app_version', '3.1.2'); // Update to new version
-                      localStorage.setItem('changelog_seen', 'true'); // Mark as seen
+                      localStorage.setItem('app_version', '3.2');
+                      localStorage.setItem('lastSeenVersion', '3.2');
                       setHasUnreadNews(false);
                       setIsMobileMenuOpen(false);
                       setShowChangelog(true); // Show changelog modal
@@ -396,7 +391,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                   </div>
                   <div className="ml-3 min-w-0 flex-1">
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{user?.username}</p>
-                    <span className="text-xs font-medium px-2 py-1 bg-slate-800 rounded text-slate-400">v3.1.2</span>
+                    <span className="text-xs font-medium px-2 py-1 bg-slate-800 rounded text-slate-400">v3.2</span>
                   </div>
                   <button
                     onClick={logout}
