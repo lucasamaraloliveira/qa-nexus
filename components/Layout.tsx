@@ -52,14 +52,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans relative transition-colors duration-300">
       {/* Background Ambience (Decorative Blobs) */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-200/40 dark:bg-purple-900/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen opacity-70 animate-blob"></div>
-        <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-indigo-200/40 dark:bg-indigo-900/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-[-10%] left-[20%] w-96 h-96 bg-pink-200/40 dark:bg-pink-900/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen opacity-70 animate-blob animation-delay-4000"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-200/40 dark:bg-purple-900/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen opacity-0 dark:opacity-70 animate-blob"></div>
+        <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-indigo-200/40 dark:bg-indigo-900/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen opacity-0 dark:opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-[-10%] left-[20%] w-96 h-96 bg-pink-200/40 dark:bg-pink-900/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen opacity-0 dark:opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
       {/* Sidebar for Desktop - Floating & Translucent */}
       <aside
-        className={`hidden md:flex flex-col m-2 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-slate-800/50 shadow-2xl z-20 relative transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-72'
+        className={`hidden md:flex flex-col m-2 rounded-2xl bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800/50 shadow-2xl z-20 relative transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-72'
           }`}
       >
         {/* Toggle Button - Floating on the Edge */}
@@ -141,11 +141,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
               <div className="flex items-center space-x-3 md:hidden">
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
-                  className="p-2.5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-slate-800/50 shadow-sm rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95"
+                  className="p-2.5 bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800/50 shadow-sm rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
                 >
                   <Menu className="h-6 w-6" />
                 </button>
-                <div className="flex items-center space-x-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-2 rounded-xl border border-white/50 dark:border-slate-800/50 shadow-sm">
+                <div className="flex items-center space-x-2 bg-white dark:bg-slate-900/60 backdrop-blur-xl p-2 rounded-xl border border-slate-200 dark:border-slate-800/50 shadow-sm">
                   <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-sm">QA</div>
                   <span className="text-lg font-bold text-slate-800 dark:text-slate-100">QA Nexus</span>
                 </div>
@@ -258,7 +258,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             {showChangelog && <Changelog onClose={() => setShowChangelog(false)} version="3.2" />}
 
             {/* Drawer */}
-            <div className={`fixed top-0 left-0 h-full w-72 bg-white/90 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl z-50 transform transition-transform duration-300 ease-out md:hidden flex flex-col border-r border-white/20 dark:border-slate-800/50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className={`fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-900 backdrop-blur-2xl shadow-2xl z-50 transform transition-transform duration-300 ease-out md:hidden flex flex-col border-r border-slate-200 dark:border-slate-800/50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
               {/* Drawer Header */}
               <div className="p-6 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50">
@@ -390,8 +390,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                     )}
                   </div>
                   <div className="ml-3 min-w-0 flex-1">
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{user?.username}</p>
-                    <span className="text-xs font-medium px-2 py-1 bg-slate-800 rounded text-slate-400">v3.2</span>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-200 truncate">{user?.username}</p>
+                    <span className="text-xs font-medium px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-slate-500 dark:text-slate-400">v3.2</span>
                   </div>
                   <button
                     onClick={logout}
