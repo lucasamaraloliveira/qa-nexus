@@ -37,8 +37,10 @@ export async function POST(req: Request) {
 
         const storage = getStorage();
         if (!storage) throw new Error('Firebase Storage not initialized');
-        const bucket = storage.bucket(`${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app`);
-        const filename = `manuals/${Date.now()}-${file.name}`;
+        
+        // Use default bucket
+        const bucket = storage.bucket();
+        const filename = `manuals/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
         const fileRef = bucket.file(filename);
 
         const bytes = await file.arrayBuffer();
@@ -48,6 +50,7 @@ export async function POST(req: Request) {
             metadata: { contentType: file.type }
         });
 
+        // Generate public media URL
         const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filename)}?alt=media`;
 
         const db = getDb();

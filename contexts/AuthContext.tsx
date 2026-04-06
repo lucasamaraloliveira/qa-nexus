@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../lib/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
 import { User } from '../types';
 
@@ -139,13 +139,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        setToken(null);
-        setUser(null);
-        setProfilePicture(null);
-        setIsAuthenticated(false);
-        setIsSessionExpired(false);
+    const logout = async () => {
+        try {
+            if (auth) {
+                await signOut(auth);
+            }
+        } catch (error) {
+            console.error('Error signing out from Firebase:', error);
+        } finally {
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+            setProfilePicture(null);
+            setIsAuthenticated(false);
+            setIsSessionExpired(false);
+        }
     };
 
     const updateUser = (newUsername: string, newProfilePicture: string | null) => {

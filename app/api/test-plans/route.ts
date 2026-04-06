@@ -9,7 +9,16 @@ export async function GET(req: Request) {
         initializeFirebase();
         const db = getDb();
         const testPlans = await db.testPlan.findMany();
-        return NextResponse.json(testPlans);
+        
+        // Buscar casos de teste para cada plano para evitar quebra no frontend
+        const fullPlans = await Promise.all(testPlans.map(async (plan: any) => {
+            const testCases = await db.testCase.findMany({
+                where: { testPlanId: plan.id }
+            });
+            return { ...plan, testCases: testCases || [] };
+        }));
+
+        return NextResponse.json(fullPlans);
     } catch (error) {
         console.error('Error fetching test plans:', error);
         return NextResponse.json({ error: 'Failed to fetch test plans' }, { status: 500 });
