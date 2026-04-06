@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Upload, FileText, Download, Trash2, Share2, File, FileCode, Image as ImageIcon, Folder, FolderPlus, ChevronRight, Home, ArrowLeft, LayoutGrid, List as ListIcon, Eye, X } from 'lucide-react';
+import { Upload, FileText, Download, Trash2, Share2, File, FileCode, Image as ImageIcon, Folder, FolderPlus, ChevronRight, Home, ArrowLeft, LayoutGrid, List as ListIcon, Eye, X, Link as LinkIcon } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { Manual } from '../types';
 import { Button } from './Button';
@@ -26,6 +26,9 @@ export const Manuals: React.FC = () => {
     // New Folder Modal State
     const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
+    const [isNewLinkModalOpen, setIsNewLinkModalOpen] = useState(false);
+    const [newLinkName, setNewLinkName] = useState('');
+    const [newLinkUrl, setNewLinkUrl] = useState('');
 
     // Confirmation Modal State
     const [confirmModal, setConfirmModal] = useState<{
@@ -179,6 +182,21 @@ export const Manuals: React.FC = () => {
         }
     };
 
+    const handleCreateLink = async () => {
+        if (!newLinkName || !newLinkUrl) return;
+
+        try {
+            await apiService.createLink(newLinkName, newLinkUrl, currentFolderId);
+            await loadManuals(currentFolderId);
+            setIsNewLinkModalOpen(false);
+            setNewLinkName('');
+            setNewLinkUrl('');
+            showToast({ message: 'Link adicionado com sucesso!', type: 'success' });
+        } catch (error) {
+            showToast({ message: 'Erro ao adicionar link', type: 'error' });
+        }
+    };
+
     const handleDelete = (id: string, name: string, isFolder: boolean) => {
         const itemToDelete = manuals.find(m => m.id === id);
         if (!itemToDelete) return;
@@ -222,7 +240,11 @@ export const Manuals: React.FC = () => {
         document.body.removeChild(link);
     };
 
-    const handlePreview = (path: string, type: string, name: string) => {
+    const handlePreview = (path: string, type: string, name: string, url?: string) => {
+        if (type === 'link' && url) {
+            window.open(url, '_blank');
+            return;
+        }
         setPreviewFile({ path, type, name });
         setIsCollapsed(true);
     };
@@ -273,6 +295,7 @@ export const Manuals: React.FC = () => {
 
     const getFileIcon = (type: string, isFolder: boolean) => {
         if (isFolder || type === 'folder') return <Folder className="w-10 h-10 text-indigo-500 fill-indigo-100 dark:fill-indigo-900/30" />;
+        if (type === 'link') return <LinkIcon className="w-8 h-8 text-indigo-500" />;
         if (type.includes('pdf')) return <FileText className="w-8 h-8 text-red-500" />;
         if (type.includes('word') || type.includes('document')) return <FileText className="w-8 h-8 text-blue-500" />;
         if (type.includes('sheet') || type.includes('excel') || type.includes('spreadsheet')) return <FileText className="w-8 h-8 text-green-500" />;
@@ -319,6 +342,10 @@ export const Manuals: React.FC = () => {
                             <Button onClick={() => setIsNewFolderModalOpen(true)} variant="secondary" className="flex-1 md:flex-none justify-center">
                                 <FolderPlus className="w-4 h-4 mr-2" />
                                 Nova Pasta
+                            </Button>
+                            <Button onClick={() => setIsNewLinkModalOpen(true)} variant="secondary" className="flex-1 md:flex-none justify-center">
+                                <LinkIcon className="w-4 h-4 mr-2" />
+                                Novo Link
                             </Button>
                             <div className="relative flex-1 md:flex-none">
                                 <input
@@ -391,7 +418,7 @@ export const Manuals: React.FC = () => {
                                     hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer flex flex-col items-center text-center
                                     ${(manual.isFolder || manual.type === 'folder') ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}
                                 `}
-                                    onDoubleClick={() => (manual.isFolder || manual.type === 'folder') ? handleFolderClick(manual) : handlePreview(manual.path, manual.type, manual.originalName || manual.name)}
+                                    onDoubleClick={() => (manual.isFolder || manual.type === 'folder') ? handleFolderClick(manual) : handlePreview(manual.path, manual.type, manual.originalName || manual.name, manual.url)}
                                 >
                                     <div className="mb-3 p-2 rounded-full bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform">
                                         {getFileIcon(manual.type, manual.isFolder || manual.type === 'folder')}
@@ -594,6 +621,36 @@ export const Manuals: React.FC = () => {
                     <div className="flex justify-end pt-4 space-x-3">
                         <Button variant="ghost" onClick={() => setIsNewFolderModalOpen(false)}>Cancelar</Button>
                         <Button onClick={handleCreateFolder}>Criar Pasta</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* New Link Modal */}
+            <Modal isOpen={isNewLinkModalOpen} onClose={() => setIsNewLinkModalOpen(false)} title="Adicionar Link Externo">
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome do Link</label>
+                        <input
+                            type="text"
+                            placeholder="Ex: SharePoint - Manual XP"
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
+                            value={newLinkName}
+                            onChange={(e) => setNewLinkName(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">URL (Endereço)</label>
+                        <input
+                            type="url"
+                            placeholder="https://google.com/drive/..."
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
+                            value={newLinkUrl}
+                            onChange={(e) => setNewLinkUrl(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex justify-end pt-4 space-x-3">
+                        <Button variant="ghost" onClick={() => setIsNewLinkModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleCreateLink}>Adicionar Link</Button>
                     </div>
                 </div>
             </Modal>

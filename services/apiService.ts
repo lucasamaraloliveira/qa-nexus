@@ -147,6 +147,16 @@ export const apiService = {
         return response.json();
     },
 
+    async createLink(name: string, url: string, parentId: string | null = null): Promise<Manual> {
+        const response = await fetch(`${API_URL}/manuals/link`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ name, url, parentId }),
+        });
+        if (!response.ok) throw new Error('Failed to create link');
+        return response.json();
+    },
+
     async uploadManual(file: File, parentId: string | null = null): Promise<Manual> {
         const formData = new FormData();
         formData.append('file', file);

@@ -63,6 +63,7 @@ export interface Manual {
   uploadDate: string;
   parentId?: string;
   isFolder: boolean;
+  url?: string;
 }
 
 export interface TestCase {
