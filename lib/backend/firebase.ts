@@ -30,6 +30,8 @@ export function initializeFirebase() {
             .replace(/'/g, '')
             .trim();
 
+        const storageBucket = `${projectId}.firebasestorage.app`;
+        
         firebaseApp = admin.initializeApp({
             credential: admin.credential.cert({
                 projectId: projectId,
@@ -37,10 +39,10 @@ export function initializeFirebase() {
                 privateKey: privateKey,
             }),
             databaseURL: `https://${projectId}.firebaseio.com`,
-            storageBucket: `${projectId}.firebasestorage.app`
+            storageBucket: storageBucket
         });
         
-        console.log(`Firebase Admin: App initialized successfully for project ${projectId}`);
+        console.log(`Firebase Admin: App initialized successfully (Bucket: ${storageBucket})`);
     } catch (error: any) {
         console.error('Firebase Admin: Initialization failure!', error.message);
         throw new Error('Falha crítica na inicialização do Firebase Admin: ' + error.message);

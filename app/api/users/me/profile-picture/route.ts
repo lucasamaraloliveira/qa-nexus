@@ -30,7 +30,13 @@ export async function PUT(req: Request) {
              throw new Error('Firebase Storage not initialized');
         }
 
-        const bucket = storage.bucket(`${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app`);
+        // Use the default bucket initialized in Admin SDK
+        const bucket = storage.bucket();
+        if (!bucket.name) {
+            // Fallback para o nome do projeto se o bucket não for resolvido
+            throw new Error(`Firebase Storage Bucket not found. Ensure it is configured in initializeFirebase.`);
+        }
+
         const filename = `profiles/${userPayload.id}-${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
         const fileRef = bucket.file(filename);
 
