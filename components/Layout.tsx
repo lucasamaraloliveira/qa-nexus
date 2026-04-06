@@ -79,7 +79,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             </div>
             <div className={`ml-3 transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0 translate-x-[-10px]' : 'opacity-100 w-auto translate-x-0'}`}>
               <span className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 whitespace-nowrap">
-                Nexus
+                QA Nexus
               </span>
             </div>
           </div>
@@ -147,7 +147,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                 </button>
                 <div className="flex items-center space-x-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-2 rounded-xl border border-white/50 dark:border-slate-800/50 shadow-sm">
                   <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-sm">QA</div>
-                  <span className="text-lg font-bold text-slate-800 dark:text-slate-100">Nexus</span>
+                  <span className="text-lg font-bold text-slate-800 dark:text-slate-100">QA Nexus</span>
                 </div>
               </div>
 
@@ -270,7 +270,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                   <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none">
                     QA
                   </div>
-                  <span className="text-xl font-bold text-slate-800 dark:text-slate-100">Nexus</span>
+                  <span className="text-xl font-bold text-slate-800 dark:text-slate-100">QA Nexus</span>
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
