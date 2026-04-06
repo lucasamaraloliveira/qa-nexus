@@ -11,16 +11,12 @@ export function initializeFirebase() {
     try {
         let privateKey = process.env.FIREBASE_PRIVATE_KEY;
         if (privateKey) {
-            // Remove literal outer quotes if present
-            privateKey = privateKey.trim();
-            if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-                privateKey = privateKey.substring(1, privateKey.length - 1);
-            }
-            if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
-                privateKey = privateKey.substring(1, privateKey.length - 1);
-            }
-            // Replace escaped \\n with actual newlines
-            privateKey = privateKey.replace(/\\n/g, '\n');
+            // Clean the private key of any possible corruption from environment parsing
+            privateKey = privateKey
+                .replace(/\\n/g, '\n') // Restore real newlines
+                .replace(/"/g, '')     // Remove all double quotes
+                .replace(/'/g, '')     // Remove all single quotes
+                .trim();               // Final trim
             
             // Ensure the key starts and ends with the correct delimiters if they were stripped
             if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
@@ -51,6 +47,7 @@ export function initializeFirebase() {
         }
     } catch (error) {
         console.error('Firebase Admin: Initialization failure:', error);
+        throw error;
     }
 }
 
