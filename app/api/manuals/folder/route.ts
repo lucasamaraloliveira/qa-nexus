@@ -13,7 +13,14 @@ export async function POST(req: Request) {
         const { name, parentId } = await req.json();
         const db = getDb();
         const newFolder = await db.manual.create({
-            data: { name, parentId, type: 'folder' } // type distinguish folder from file
+            data: { 
+                name, 
+                parentId, 
+                type: 'folder', 
+                isFolder: true,
+                size: 0,
+                uploadDate: new Date().toISOString()
+            }
         });
 
         await AuditService.logAction(userPayload.id, userPayload.username, 'CREATE_FOLDER', 'MANUALS', newFolder.id, `Pasta criada ${name}`, req);

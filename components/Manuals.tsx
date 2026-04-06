@@ -272,7 +272,7 @@ export const Manuals: React.FC = () => {
     };
 
     const getFileIcon = (type: string, isFolder: boolean) => {
-        if (isFolder) return <Folder className="w-10 h-10 text-indigo-500 fill-indigo-100 dark:fill-indigo-900/30" />;
+        if (isFolder || type === 'folder') return <Folder className="w-10 h-10 text-indigo-500 fill-indigo-100 dark:fill-indigo-900/30" />;
         if (type.includes('pdf')) return <FileText className="w-8 h-8 text-red-500" />;
         if (type.includes('word') || type.includes('document')) return <FileText className="w-8 h-8 text-blue-500" />;
         if (type.includes('sheet') || type.includes('excel') || type.includes('spreadsheet')) return <FileText className="w-8 h-8 text-green-500" />;
@@ -389,12 +389,12 @@ export const Manuals: React.FC = () => {
                                     className={`
                                     group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 
                                     hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer flex flex-col items-center text-center
-                                    ${manual.isFolder ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}
+                                    ${(manual.isFolder || manual.type === 'folder') ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}
                                 `}
-                                    onDoubleClick={() => manual.isFolder ? handleFolderClick(manual) : handlePreview(manual.path, manual.type, manual.originalName || manual.name)}
+                                    onDoubleClick={() => (manual.isFolder || manual.type === 'folder') ? handleFolderClick(manual) : handlePreview(manual.path, manual.type, manual.originalName || manual.name)}
                                 >
                                     <div className="mb-3 p-2 rounded-full bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform">
-                                        {getFileIcon(manual.type, manual.isFolder)}
+                                        {getFileIcon(manual.type, manual.isFolder || manual.type === 'folder')}
                                     </div>
 
                                     <h3 className="font-medium text-slate-900 dark:text-slate-100 text-sm truncate w-full mb-1" title={manual.originalName || manual.name}>
@@ -480,7 +480,7 @@ export const Manuals: React.FC = () => {
                                                 {manual.isFolder ? '-' : formatSize(manual.size)}
                                             </td>
                                             <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                                                {new Date(manual.uploadDate).toLocaleDateString()}
+                                                {manual.uploadDate ? new Date(manual.uploadDate).toLocaleDateString() : '-'}
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

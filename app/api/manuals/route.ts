@@ -57,11 +57,14 @@ export async function POST(req: Request) {
         const newManual = await db.manual.create({
             data: { 
                 name: file.name, 
+                originalName: file.name,
                 url, 
+                path: filename,
                 parentId, 
-                type: 'file',
+                type: file.type || 'application/octet-stream',
+                isFolder: false,
                 size: file.size,
-                uploadedAt: new Date().toISOString()
+                uploadDate: new Date().toISOString()
             }
         });
 
