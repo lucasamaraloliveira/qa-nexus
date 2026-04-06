@@ -30,7 +30,8 @@ export function initializeFirebase() {
             .replace(/'/g, '')
             .trim();
 
-        const storageBucket = `${projectId}.firebasestorage.app`;
+        // Permite sobrescrever o bucket via variável de ambiente para flexibilidade (appspot vs firebasestorage)
+        const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.firebasestorage.app`;
         
         firebaseApp = admin.initializeApp({
             credential: admin.credential.cert({
