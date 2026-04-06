@@ -456,15 +456,15 @@ export const Manuals: React.FC = () => {
 
                                     {/* Actions Overlay */}
                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); (manual.isFolder || manual.type === 'folder') ? handleFolderClick(manual) : handlePreview(manual.path, manual.type, manual.originalName || manual.name, manual.url); }}
+                                            className="p-1.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 shadow-sm rounded-md border border-slate-200 dark:border-slate-700"
+                                            title="Visualizar"
+                                        >
+                                            <Eye className="w-3 h-3" />
+                                        </button>
                                         {!manual.isFolder && (
                                             <>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handlePreview(manual.path, manual.type, manual.originalName || manual.name); }}
-                                                    className="p-1.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 shadow-sm rounded-md border border-slate-200 dark:border-slate-700"
-                                                    title="Visualizar"
-                                                >
-                                                    <Eye className="w-3 h-3" />
-                                                </button>
                                                 {!isViewer && (
                                                     <>
                                                         <button
@@ -533,15 +533,15 @@ export const Manuals: React.FC = () => {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); (manual.isFolder || manual.type === 'folder') ? handleFolderClick(manual) : handlePreview(manual.path, manual.type, manual.originalName || manual.name, manual.url); }}
+                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700"
+                                                        title="Visualizar"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
                                                     {!manual.isFolder && (
                                                         <>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handlePreview(manual.path, manual.type, manual.originalName || manual.name); }}
-                                                                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700"
-                                                                title="Visualizar"
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </button>
                                                             {!isViewer && (
                                                                 <>
                                                                     <button
