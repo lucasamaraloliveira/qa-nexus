@@ -19,8 +19,18 @@ export function initializeFirebase() {
             if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
                 privateKey = privateKey.substring(1, privateKey.length - 1);
             }
-            // Replace escaped \n with actual newlines
+            // Replace escaped \\n with actual newlines
             privateKey = privateKey.replace(/\\n/g, '\n');
+            
+            // Ensure the key starts and ends with the correct delimiters if they were stripped
+            if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+                privateKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}`;
+            }
+            if (!privateKey.includes('-----END PRIVATE KEY-----')) {
+                privateKey = `${privateKey}\n-----END PRIVATE KEY-----`;
+            }
+        } else {
+            console.warn('Firebase: FIREBASE_PRIVATE_KEY not set.');
         }
 
         const serviceAccount: admin.ServiceAccount = {
@@ -35,12 +45,12 @@ export function initializeFirebase() {
                 databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
                 storageBucket: `${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app`
             });
-            console.log('Connected to Firebase via Firebase Admin');
+            console.log('Firebase Admin: App initialized successfully (Project:', process.env.FIREBASE_PROJECT_ID + ')');
         } else {
             firebaseApp = admin.app();
         }
     } catch (error) {
-        console.error('Error initializing Firebase:', error);
+        console.error('Firebase Admin: Initialization failure:', error);
     }
 }
 

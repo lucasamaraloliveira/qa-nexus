@@ -124,7 +124,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 body: JSON.stringify({ idToken })
             });
 
-            if (!response.ok) throw new Error('Backend authentication failed');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Backend Authentication Detail:', errorData);
+                throw new Error(errorData.error || 'Backend authentication failed');
+            }
 
             const data = await response.json();
             login(data.token, data.username, data.role, data.id);

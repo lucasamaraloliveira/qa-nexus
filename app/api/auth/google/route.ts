@@ -56,7 +56,10 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        console.error('Google Auth Error:', error);
-        return NextResponse.json({ error: error.message || 'Invalid ID Token' }, { status: 401 });
+        console.error('[AUTH/GOOGLE] Critical Authentication Error:', error);
+        return NextResponse.json({ 
+            error: error.message || 'Invalid ID Token',
+            details: error.stack
+        }, { status: 401 });
     }
 }
