@@ -15,6 +15,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "QA Nexus",
   description: "Plataforma de Gestão de Qualidade e Testes",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "QA Nexus",
+  },
+  icons: {
+    apple: "/icons/icon-192x192.png",
+  },
 };
 
 import { ThemeProvider } from "../ThemeContext";
