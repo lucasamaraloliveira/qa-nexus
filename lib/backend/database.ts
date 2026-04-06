@@ -34,20 +34,39 @@ function getCollectionShim(collectionName: string) {
             const snapshot = await query.get();
             return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
         },
-        findUnique: async ({ where }: any) => {
+        findUnique: async (args: any) => {
+            const where = args.where;
+            const select = args.select;
+
+            let result: any = null;
             const id = where.id;
             if (id && typeof id === 'string') {
                 const doc = await firestore.collection(collectionName).doc(id).get();
-                return doc.exists ? { id: doc.id, ...doc.data() } : null;
+                result = doc.exists ? { id: doc.id, ...doc.data() } : null;
+            } else {
+                // Support other unique keys by querying
+                let query: any = firestore.collection(collectionName);
+                Object.keys(where).forEach(key => {
+                    query = query.where(key, '==', where[key]);
+                });
+                const snapshot = await query.limit(1).get();
+                result = snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
             }
-            
-            // Support other unique keys by querying
-            let query: any = firestore.collection(collectionName);
-            Object.keys(where).forEach(key => {
-                query = query.where(key, '==', where[key]);
-            });
-            const snapshot = await query.limit(1).get();
-            return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+
+            // Filter fields if select is provided
+            if (result && select) {
+                const filtered: any = {};
+                Object.keys(select).forEach(key => {
+                    if (select[key] && result[key] !== undefined) {
+                        filtered[key] = result[key];
+                    }
+                });
+                // Always include id
+                filtered.id = result.id;
+                return filtered;
+            }
+
+            return result;
         },
         create: async ({ data }: any) => {
             const res = await firestore.collection(collectionName).add({
