@@ -15,7 +15,7 @@ export enum Priority {
 export type Role = 'Root' | 'Admin' | 'Tester' | 'Viewer' | 'Support';
 
 export interface User {
-  id: number;
+  id: string;
   username: string;
   role: Role;
   profilePicture?: string;
@@ -110,8 +110,8 @@ export interface ChangelogSystem {
 }
 
 export interface AuditLog {
-  id: number;
-  userId: number | null;
+  id: string;
+  userId: string | null;
   username: string;
   action: string;
   module: string;

@@ -10,7 +10,7 @@ interface AuthContextType {
     user: User | null;
     profilePicture: string | null;
     token: string | null;
-    login: (token: string, username: string, role: string, id: number) => void;
+    login: (token: string, username: string, role: string, id: string) => void;
     googleLogin: () => Promise<void>;
     logout: () => void;
     updateUser: (username: string, profilePicture: string | null) => void;
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     throw new Error('Failed to fetch user');
                 })
                 .then(data => {
-                    setUser({ id: data.id, username: data.username, role: data.role });
+                    setUser({ id: String(data.id), username: data.username, role: data.role });
                     if (data.profilePicture) {
                         setProfilePicture(data.profilePicture);
                     }
@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
-    const login = (newToken: string, newUsername: string, role: string, id: number) => {
+    const login = (newToken: string, newUsername: string, role: string, id: string) => {
         localStorage.setItem('token', newToken);
         setToken(newToken);
         setIsSessionExpired(false); // Reset expiry on login
